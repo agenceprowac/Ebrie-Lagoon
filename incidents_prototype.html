@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ebrié Lagoon Experience - Incidents & Réclamations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Outfit', sans-serif; background-color: #f3f4f6; }
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        .sidebar-item { transition: all 0.3s ease; border-radius: 0.5rem; }
+        .sidebar-item:hover { background-color: #ebf5ff; color: #1d4ed8; transform: translateX(5px); }
+        .sidebar-item.active { background-color: #2563eb; color: white; }
+        
+        .tab-btn { border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .tab-btn.active { border-bottom-color: #2563eb; color: #2563eb; font-weight: 600; }
+        
+        /* Modals animations */
+        .modal-panel { transition: all 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-slate-50 flex h-screen overflow-hidden text-gray-800">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white shadow-xl flex flex-col hidden md:flex z-30 relative shrink-0">
+        <div class="p-6 flex items-center justify-center border-b border-gray-100">
+            <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg mr-3">
+                <i class="fa-solid fa-water"></i>
+            </div>
+            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500">
+                Ebrié Lagoon
+            </h1>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+            <div class="px-2 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Principal</div>
+            <a href="dashboard_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-chart-pie w-6"></i> Tableau de bord
+            </a>
+            <a href="reservations_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-calendar-check w-6"></i> Réservations
+            </a>
+            <a href="finances_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-file-invoice-dollar w-6"></i> Finances & Devis
+            </a>
+            <a href="flotte_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-ship w-6"></i> Flotte & Opérations
+            </a>
+            <a href="incidents_prototype.html" class="sidebar-item active flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-triangle-exclamation w-6"></i> Incidents
+            </a>
+            <a href="partenaires_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-handshake w-6"></i> Partenaires
+            </a>
+            
+            <div class="px-2 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Administration</div>
+            <a href="clients_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-users w-6"></i> Clients
+            </a>
+            <a href="parametres_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-gear w-6"></i> Paramètres
+            </a>
+        </nav>
+        <div class="p-4 border-t border-gray-100">
+            <button class="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:text-red-600 transition">
+                <i class="fa-solid fa-sign-out-alt w-6"></i> Déconnexion
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto relative bg-slate-50">
+        <!-- Header -->
+        <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between px-6 py-4">
+                <div class="flex items-center bg-gray-100 rounded-full px-4 py-2 w-96 focus-within:ring-2 focus-within:ring-blue-400 transition">
+                    <i class="fa-solid fa-search text-gray-400"></i>
+                    <input type="text" placeholder="Rechercher un incident ou une réclamation..." class="bg-transparent border-none outline-none ml-2 w-full text-sm">
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="relative p-2 text-gray-400 hover:text-gray-600 transition">
+                        <i class="fa-solid fa-bell text-xl"></i>
+                        <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                    <div class="flex items-center space-x-3 border-l pl-4 border-gray-200 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
+                        <img src="https://ui-avatars.com/api/?name=Lionel+Vithiano&background=0D8ABC&color=fff" alt="User" class="w-9 h-9 rounded-full shadow-sm">
+                        <div class="hidden md:block text-sm">
+                            <p class="font-semibold text-gray-700">M. Lionel Vithiano</p>
+                            <p class="text-xs text-gray-500">Administrateur</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="p-6 lg:p-8 space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800 tracking-tight">Gestion des Incidents & Réclamations</h2>
+                    <p class="text-sm text-gray-500 mt-1">Registre officiel pour l'exploitation et le reporting d'assurance</p>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="toggleModal('newIncidentModal')" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl shadow-md transition transform hover:-translate-y-0.5 text-sm font-medium flex items-center">
+                        <i class="fa-solid fa-triangle-exclamation mr-2"></i> Nouvel Incident
+                    </button>
+                    <button onclick="toggleModal('newReclamationModal')" class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl shadow-md transition transform hover:-translate-y-0.5 text-sm font-medium flex items-center">
+                        <i class="fa-solid fa-comment-dots mr-2"></i> Nouvelle Réclamation
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex space-x-8 border-b border-gray-200 mb-6">
+                <button onclick="switchTab('incidents')" id="tab-incidents" class="tab-btn active pb-3 text-gray-600 font-medium flex items-center">
+                    <i class="fa-solid fa-triangle-exclamation mr-2"></i> Incidents & Urgences
+                    <span class="ml-2 bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs">2</span>
+                </button>
+                <button onclick="switchTab('reclamations')" id="tab-reclamations" class="tab-btn pb-3 text-gray-600 font-medium flex items-center hover:text-gray-900">
+                    <i class="fa-solid fa-user-injured mr-2"></i> Réclamations Clients
+                    <span class="ml-2 bg-orange-100 text-orange-600 py-0.5 px-2 rounded-full text-xs">1</span>
+                </button>
+            </div>
+
+            <!-- TAB CONTENT: INCIDENTS -->
+            <div id="content-incidents" class="block space-y-6">
+                <!-- Stats Incidents -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">En cours</p>
+                        <h3 class="text-2xl font-bold text-red-600">2</h3>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Impact Financier (Est.)</p>
+                        <h3 class="text-2xl font-bold text-gray-800">450 000 F</h3>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Prise en charge Assur.</p>
+                        <h3 class="text-2xl font-bold text-green-600">0 F</h3>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Impact Net</p>
+                        <h3 class="text-2xl font-bold text-orange-600">450 000 F</h3>
+                    </div>
+                </div>
+
+                <!-- Table Incidents -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <h3 class="font-bold text-gray-700">Registre des Incidents</h3>
+                        <button class="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded text-gray-600 hover:bg-gray-50"><i class="fa-solid fa-file-excel mr-1"></i> Export Excel</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-white text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
+                                    <th class="px-4 py-3 font-medium">N° Incident</th>
+                                    <th class="px-4 py-3 font-medium">Date/Heure</th>
+                                    <th class="px-4 py-3 font-medium">Réservation & Client</th>
+                                    <th class="px-4 py-3 font-medium">Nature</th>
+                                    <th class="px-4 py-3 font-medium text-center">Niveau</th>
+                                    <th class="px-4 py-3 font-medium text-center">Statut</th>
+                                    <th class="px-4 py-3 font-medium text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm divide-y divide-gray-50">
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="px-4 py-3 font-bold text-gray-800">INC-0001</td>
+                                    <td class="px-4 py-3 text-gray-500">10 Juin 2026<br><span class="text-xs">14:15</span></td>
+                                    <td class="px-4 py-3">
+                                        <div class="font-medium text-blue-600">RES-0145</div>
+                                        <div class="text-xs text-gray-500">Koffi Armand (2 pax)</div>
+                                    </td>
+                                    <td class="px-4 py-3 font-medium text-gray-700">Panne Moteur Tribord (L'Explorateur)</td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold"><i class="fa-solid fa-arrow-up mr-1"></i> Critique</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="px-2 py-1 bg-orange-100 text-orange-700 border border-orange-200 rounded-full text-xs font-semibold">En traitement</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-right">
+                                        <button onclick="toggleModal('detailIncidentModal')" class="text-blue-600 hover:text-blue-800 text-xs font-bold border border-blue-200 bg-blue-50 px-3 py-1.5 rounded hover:bg-blue-100 transition">Détails Complets</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="px-4 py-3 font-bold text-gray-800">INC-0002</td>
+                                    <td class="px-4 py-3 text-gray-500">08 Juin 2026<br><span class="text-xs">09:30</span></td>
+                                    <td class="px-4 py-3">
+                                        <div class="font-medium text-blue-600">RES-0142</div>
+                                        <div class="text-xs text-gray-500">SOTRA (40 pax)</div>
+                                    </td>
+                                    <td class="px-4 py-3 font-medium text-gray-700">Malaise passager à bord</td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-bold">Moyen</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="px-2 py-1 bg-green-100 text-green-700 border border-green-200 rounded-full text-xs font-semibold">Clôturé</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-right">
+                                        <button onclick="toggleModal('detailIncidentModal')" class="text-blue-600 hover:text-blue-800 text-xs font-bold border border-blue-200 bg-blue-50 px-3 py-1.5 rounded hover:bg-blue-100 transition">Détails Complets</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB CONTENT: RÉCLAMATIONS -->
+            <div id="content-reclamations" class="hidden space-y-6">
+                <!-- Table Réclamations -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <h3 class="font-bold text-gray-700">Registre des Réclamations</h3>
+                        <button class="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded text-gray-600 hover:bg-gray-50"><i class="fa-solid fa-file-excel mr-1"></i> Export Excel</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-white text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
+                                    <th class="px-4 py-3 font-medium">N° Récl.</th>
+                                    <th class="px-4 py-3 font-medium">Date Réception</th>
+                                    <th class="px-4 py-3 font-medium">Client / Réservation</th>
+                                    <th class="px-4 py-3 font-medium">Objet</th>
+                                    <th class="px-4 py-3 font-medium text-center">Délai Traitement</th>
+                                    <th class="px-4 py-3 font-medium text-center">Statut</th>
+                                    <th class="px-4 py-3 font-medium text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm divide-y divide-gray-50">
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="px-4 py-3 font-bold text-gray-800">REC-0001</td>
+                                    <td class="px-4 py-3 text-gray-500">09 Juin 2026</td>
+                                    <td class="px-4 py-3">
+                                        <div class="font-medium text-gray-900">Mme Sylla</div>
+                                        <div class="text-xs text-blue-600">RES-0139 (08 Juin)</div>
+                                    </td>
+                                    <td class="px-4 py-3 font-medium text-gray-700">Retard important (45 min) au départ</td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="text-orange-600 font-bold">1 jour(s)</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="px-2 py-1 bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-full text-xs font-semibold">Analyse interne</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-right">
+                                        <button class="text-blue-600 hover:text-blue-800 text-xs font-bold border border-blue-200 bg-blue-50 px-3 py-1.5 rounded hover:bg-blue-100 transition">Traiter</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- MODAL: DÉTAILS DE L'INCIDENT (Les 19 colonnes de l'Excel) -->
+    <div id="detailIncidentModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onclick="toggleModal('detailIncidentModal')"></div>
+        <div class="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl flex flex-col transform transition-all scale-95 opacity-0 duration-300 ease-in-out modal-panel max-h-[90vh]">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <span class="bg-red-100 text-red-700 px-3 py-1 rounded font-bold text-sm">INC-0001</span>
+                        <h3 class="text-xl font-bold text-gray-800">Panne Moteur Tribord</h3>
+                        <span class="px-2 py-0.5 bg-orange-100 text-orange-700 border border-orange-200 rounded-full text-xs font-semibold">En traitement</span>
+                    </div>
+                </div>
+                <button onclick="toggleModal('detailIncidentModal')" class="text-gray-400 hover:text-red-500 transition text-2xl"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto bg-white flex-1 space-y-8">
+                
+                <!-- Section 1: Informations Générales -->
+                <div>
+                    <h4 class="font-bold text-gray-800 mb-4 border-b pb-2 flex items-center"><i class="fa-solid fa-circle-info text-blue-500 mr-2"></i> Informations Générales</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Date et Heure</p>
+                            <p class="font-medium text-gray-800">10 Juin 2026, 14:15</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">N° Réservation liée</p>
+                            <p class="font-medium text-blue-600 cursor-pointer hover:underline">RES-0145</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Client / Personnes concernées</p>
+                            <p class="font-medium text-gray-800">Koffi Armand (2 pax)</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Prestation concernée</p>
+                            <p class="font-medium text-gray-800">Balade Lagune (2h)</p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Lieu</p>
+                            <p class="font-medium text-gray-800">Zone Baie des Milliardaires, Point GPS: 5.289, -4.012</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Suivi et Urgence -->
+                <div>
+                    <h4 class="font-bold text-gray-800 mb-4 border-b pb-2 flex items-center"><i class="fa-solid fa-shield-halved text-red-500 mr-2"></i> Suivi & Gestion de l'urgence</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-red-50/30 p-4 rounded-xl border border-red-50">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Nature de l'incident</p>
+                            <p class="font-medium text-gray-800">Surchauffe avec arrêt brutal du moteur tribord sur L'Explorateur.</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Niveau de gravité</p>
+                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold uppercase"><i class="fa-solid fa-arrow-up mr-1"></i> Critique</span>
+                        </div>
+                        <div class="md:col-span-2">
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Mesures immédiates prises</p>
+                            <p class="font-medium text-gray-800 bg-white p-3 rounded border border-gray-200">Bateau ancré, clients mis en sécurité. Envoi immédiat du bateau de secours "Lagune Express" pour transfert des passagers.</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Secours / Autorités contactés</p>
+                            <p class="font-medium text-gray-800">Non nécessaire (Secours internes gérés)</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Responsable du suivi</p>
+                            <p class="font-medium text-gray-800"><img src="https://ui-avatars.com/api/?name=Lionel+Vithiano&background=0D8ABC&color=fff" class="w-5 h-5 rounded-full inline mr-1"> Lionel Vithiano</p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Action corrective à long terme</p>
+                            <p class="font-medium text-gray-800 bg-white p-3 rounded border border-gray-200">Immobilisation du navire pour révision complète. Commander une nouvelle pompe à eau de mer.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Financier & Assurances -->
+                <div>
+                    <h4 class="font-bold text-gray-800 mb-4 border-b pb-2 flex items-center"><i class="fa-solid fa-file-invoice-dollar text-green-500 mr-2"></i> Volet Financier & Assurances</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-gray-50 p-3 rounded border border-gray-200 text-center">
+                            <p class="text-xs text-gray-500 uppercase mb-1">Assureur informé</p>
+                            <p class="font-bold text-gray-800">OUI</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded border border-gray-200 text-center">
+                            <p class="text-xs text-gray-500 uppercase mb-1">Date déclaration</p>
+                            <p class="font-bold text-gray-800">10 Juin 2026</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded border border-gray-200 text-center">
+                            <p class="text-xs text-gray-500 uppercase mb-1">Remboursement</p>
+                            <p class="font-bold text-green-600">En attente</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded border border-gray-200 text-center">
+                            <p class="text-xs text-gray-500 uppercase mb-1">Impact Net</p>
+                            <p class="font-bold text-red-600">450 000 FCFA</p>
+                        </div>
+                        <div class="md:col-span-4 mt-2">
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Détail du Coût estimé</p>
+                            <p class="font-medium text-gray-800 bg-white p-3 rounded border border-gray-200">
+                                350 000 F (Pièces et main d'oeuvre mécanique) + 100 000 F (Dédommagement geste commercial client RES-0145).
+                            </p>
+                        </div>
+                        <div class="md:col-span-4 mt-2">
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Observations générales</p>
+                            <p class="font-medium text-gray-800 bg-white p-3 rounded border border-gray-200 italic text-sm">
+                                L'expert de l'assurance passera le 12 Juin pour valider le devis de réparation.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <!-- Footer -->
+            <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-between items-center">
+                <button class="text-gray-500 hover:text-gray-700 text-sm font-medium"><i class="fa-solid fa-print mr-1"></i> Imprimer Fiche</button>
+                <div class="space-x-3">
+                    <button class="px-5 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 rounded-lg transition">Éditer</button>
+                    <button onclick="toggleModal('detailIncidentModal')" class="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: DÉCLARER UN INCIDENT -->
+    <div id="newIncidentModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onclick="toggleModal('newIncidentModal')"></div>
+        <div class="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col transform transition-all scale-95 opacity-0 duration-300 ease-in-out modal-panel max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                <h3 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-triangle-exclamation text-red-600 mr-2"></i> Déclarer un incident</h3>
+                <button onclick="toggleModal('newIncidentModal')" class="text-gray-400 hover:text-red-500 transition text-2xl"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto bg-white flex-1 space-y-6">
+                <!-- Step 1 -->
+                <div>
+                    <h4 class="font-bold text-gray-700 mb-3 text-sm border-b pb-1">1. Contexte</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Date et Heure</label>
+                            <input type="datetime-local" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">N° Réservation (Optionnel)</label>
+                            <input type="text" placeholder="Ex: RES-0145" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Lieu exact</label>
+                            <input type="text" placeholder="Coordonnées GPS ou zone descriptive" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div>
+                    <h4 class="font-bold text-gray-700 mb-3 text-sm border-b pb-1">2. Description & Gravité</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Nature de l'incident</label>
+                            <textarea rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Niveau de gravité</label>
+                            <select class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="faible">Faible (Aucun risque)</option>
+                                <option value="moyen">Moyen (Perturbation opérationnelle)</option>
+                                <option value="critique">Critique (Risque humain ou matériel majeur)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Secours contactés ?</label>
+                            <select class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="non">Non</option>
+                                <option value="pompiers">Oui, Pompiers/Police</option>
+                                <option value="secours_mer">Oui, Secours en mer</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Mesures immédiates prises</label>
+                            <textarea rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 p-3 rounded-lg text-xs text-blue-800">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Les champs financiers et d'assurance pourront être complétés ultérieurement lors du suivi de cet incident.
+                </div>
+            </div>
+            
+            <div class="p-6 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3 rounded-b-2xl">
+                <button onclick="toggleModal('newIncidentModal')" class="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Annuler</button>
+                <button class="px-5 py-2.5 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition shadow-md">Enregistrer l'incident</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Réclamation vide (pour la démo) -->
+    <div id="newReclamationModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onclick="toggleModal('newReclamationModal')"></div>
+        <div class="relative w-full max-w-md bg-white rounded-2xl shadow-2xl flex flex-col transform transition-all scale-95 opacity-0 duration-300 ease-in-out modal-panel p-6">
+            <h3 class="text-xl font-bold mb-4">Nouvelle Réclamation</h3>
+            <p class="text-sm text-gray-500 mb-6">Formulaire de saisie d'une réclamation client à implémenter.</p>
+            <button onclick="toggleModal('newReclamationModal')" class="w-full px-5 py-2.5 rounded-lg text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition">Fermer</button>
+        </div>
+    </div>
+
+    <script>
+        function toggleModal(modalID) {
+            const modal = document.getElementById(modalID);
+            const panel = modal.querySelector('.modal-panel');
+            
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                // Petit délai pour permettre l'animation
+                setTimeout(() => {
+                    panel.classList.remove('scale-95', 'opacity-0');
+                    panel.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            } else {
+                panel.classList.remove('scale-100', 'opacity-100');
+                panel.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300); // Durée de la transition
+            }
+        }
+
+        function switchTab(tabName) {
+            // Boutons
+            document.getElementById('tab-incidents').classList.remove('active', 'border-blue-600', 'text-blue-600');
+            document.getElementById('tab-reclamations').classList.remove('active', 'border-blue-600', 'text-blue-600');
+            
+            document.getElementById('tab-' + tabName).classList.add('active', 'border-blue-600', 'text-blue-600');
+            
+            // Contenus
+            if(tabName === 'incidents') {
+                document.getElementById('content-incidents').classList.remove('hidden');
+                document.getElementById('content-reclamations').classList.add('hidden');
+            } else {
+                document.getElementById('content-incidents').classList.add('hidden');
+                document.getElementById('content-reclamations').classList.remove('hidden');
+            }
+        }
+        
+        // Init tabs styling properly
+        switchTab('incidents');
+    </script>
+</body>
+</html>

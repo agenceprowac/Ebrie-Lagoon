@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaS Ebrié Lagoon - Paramètres</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .sidebar-item {
+            transition: all 0.3s ease;
+            border-radius: 0.5rem;
+        }
+
+        .sidebar-item:hover {
+            background-color: #ebf5ff;
+            color: #1d4ed8;
+            transform: translateX(5px);
+        }
+
+        .sidebar-item.active {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        /* Custom scrollbar for timeline */
+        .timeline-scroll::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .timeline-scroll::-webkit-scrollbar-thumb {
+            background-color: #CBD5E1;
+            border-radius: 4px;
+        }
+
+        /* Internal tabs */
+        .tab-active {
+            background-color: #F8FAFC;
+            border-left: 3px solid #2563EB;
+            color: #1E3A8A;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 flex h-screen overflow-hidden text-gray-800">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white shadow-xl flex flex-col hidden md:flex z-30 relative shrink-0">
+        <div class="p-6 flex items-center justify-center border-b border-gray-100">
+            <div
+                class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg mr-3">
+                <i class="fa-solid fa-water"></i>
+            </div>
+            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500">
+                Ebrié Lagoon
+            </h1>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+            <div class="px-2 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Principal</div>
+            <a href="dashboard_prototype.html"
+                class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-chart-pie w-6"></i> Tableau de bord
+            </a>
+            <a href="reservations_prototype.html"
+                class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-calendar-check w-6"></i> Réservations
+            </a>
+            <a href="finances_prototype.html"
+                class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-file-invoice-dollar w-6"></i> Finances & Devis
+            </a>
+            <a href="flotte_prototype.html"
+                class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-ship w-6"></i> Flotte & Opérations
+            </a>
+            <a href="incidents_prototype.html"
+                class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-triangle-exclamation w-6"></i> Incidents
+            </a>
+            <a href="partenaires_prototype.html"
+                class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-handshake w-6"></i> Partenaires
+            </a>
+
+            <div class="px-2 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Administration
+            </div>
+            <a href="clients_prototype.html"
+                class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-users w-6"></i> Clients
+            </a>
+            <a href="parametres_prototype.html"
+                class="sidebar-item active flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-gear w-6"></i> Paramètres
+            </a>
+        </nav>
+        <div class="p-4 border-t border-gray-100">
+            <button class="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:text-red-600 transition">
+                <i class="fa-solid fa-sign-out-alt w-6"></i> Déconnexion
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto bg-slate-50 relative">
+        <!-- Header -->
+        <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between px-6 py-4">
+                <div
+                    class="flex items-center bg-gray-100 rounded-full px-4 py-2 w-96 focus-within:ring-2 focus-within:ring-blue-400 transition opacity-0">
+                    <!-- Hidden search just to keep layout balanced -->
+                    <i class="fa-solid fa-search text-gray-400"></i>
+                    <input type="text" class="bg-transparent border-none outline-none ml-2 w-full text-sm">
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="relative p-2 text-gray-400 hover:text-gray-600 transition">
+                        <i class="fa-solid fa-bell text-xl"></i>
+                        <span
+                            class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                    <div
+                        class="flex items-center space-x-3 border-l pl-4 border-gray-200 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
+                        <img src="https://ui-avatars.com/api/?name=Lionel+Vithiano&background=0D8ABC&color=fff"
+                            alt="User" class="w-9 h-9 rounded-full shadow-sm">
+                        <div class="hidden md:block text-sm">
+                            <p class="font-semibold text-gray-700">M. Lionel Vithiano</p>
+                            <p class="text-xs text-gray-500">Administrateur</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="p-6 lg:p-8 flex-1 flex flex-col">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Paramètres de l'Application</h2>
+                <p class="text-sm text-gray-500">Configurez votre environnement, vos utilisateurs et vos tarifs</p>
+            </div>
+
+            <div class="flex flex-1 gap-6 overflow-hidden">
+
+                <!-- Internal Sidebar -->
+                <div class="w-64 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-1 h-fit">
+                    <button id="btn-tab-societe" onclick="switchTab('societe')"
+                        class="w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition border-l-3 border-transparent">
+                        <i class="fa-solid fa-building mr-2 w-4"></i> Informations Société
+                    </button>
+                    <button id="btn-tab-users" onclick="switchTab('users')"
+                        class="w-full text-left px-4 py-3 rounded-lg text-sm transition tab-active">
+                        <i class="fa-solid fa-users-gear mr-2 w-4"></i> Utilisateurs & Rôles
+                    </button>
+                    <button id="btn-tab-tarifs" onclick="switchTab('tarifs')"
+                        class="w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition border-l-3 border-transparent">
+                        <i class="fa-solid fa-tags mr-2 w-4"></i> Tarification & Packs
+                    </button>
+                    <button id="btn-tab-pdf" onclick="switchTab('pdf')"
+                        class="w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition border-l-3 border-transparent">
+                        <i class="fa-solid fa-file-invoice mr-2 w-4"></i> Modèles PDF
+                    </button>
+                    <button id="btn-tab-notifications" onclick="switchTab('notifications')"
+                        class="w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition border-l-3 border-transparent">
+                        <i class="fa-solid fa-bell mr-2 w-4"></i> Notifications
+                    </button>
+                </div>
+
+                <!-- Settings Content Area -->
+                <div class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-y-auto relative">
+
+                    <!-- Section: Informations Société (NEW) -->
+                    <div id="tab-societe" class="p-6 md:p-8 hidden">
+                        <div class="mb-6">
+                            <h3 class="text-lg font-bold text-gray-800">Informations de la Société</h3>
+                            <p class="text-sm text-gray-500">Ces informations apparaîtront sur vos devis et factures.
+                            </p>
+                        </div>
+
+                        <div class="space-y-6 max-w-3xl">
+                            <!-- Logo Upload -->
+                            <div class="flex items-center space-x-6 border-b border-gray-100 pb-6">
+                                <div
+                                    class="w-24 h-24 rounded-lg bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center">
+                                    <i class="fa-solid fa-image text-gray-400 text-2xl"></i>
+                                </div>
+                                <div>
+                                    <button
+                                        class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm">
+                                        <i class="fa-solid fa-upload mr-2"></i> Télécharger le Logo
+                                    </button>
+                                    <p class="text-xs text-gray-500 mt-2">Format recommandé: PNG ou JPG, max 2MB.
+                                        500x500px.</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="col-span-2">
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Raison Sociale *</label>
+                                    <input type="text" value="Ebrié Lagoon CI"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Registre de Commerce
+                                        (RCCM)</label>
+                                    <input type="text" value="CI-ABJ-2023-B-12345"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Compte Contribuable
+                                        (CC)</label>
+                                    <input type="text" value="1234567 A"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                </div>
+
+                                <div class="col-span-2">
+                                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2">
+                                        Coordonnées</h4>
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Adresse Complète</label>
+                                    <input type="text" value="Abidjan, Marcory Zone 4, Rue Pierre et Marie Curie"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Téléphone
+                                        Principal</label>
+                                    <input type="text" value="+225 07 00 11 22 33"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Email de Contact</label>
+                                    <input type="email" value="contact@ebrielagoon.com"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                </div>
+
+                                <div class="col-span-2">
+                                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2">
+                                        Informations Bancaires</h4>
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Détails Bancaires (RIB,
+                                        IBAN, Nom de la banque)</label>
+                                    <textarea rows="3"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">Banque: Ecobank CI
+Titulaire: Ebrié Lagoon CI
+RIB: CI059 01001 12345678901 23</textarea>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-gray-100 flex justify-end">
+                                <button
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg shadow-md transition text-sm font-medium">
+                                    Enregistrer les informations
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Modèles PDF (NEW) -->
+                    <div id="tab-pdf" class="p-6 md:p-8 hidden">
+                        <div class="mb-6">
+                            <h3 class="text-lg font-bold text-gray-800">Personnalisation des Documents PDF</h3>
+                            <p class="text-sm text-gray-500">Gérez le design visuel de vos devis et factures.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- Config Form -->
+                            <div class="space-y-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Couleur
+                                        Principale</label>
+                                    <div class="flex items-center space-x-3">
+                                        <input type="color" value="#2563EB"
+                                            class="w-10 h-10 p-1 rounded border border-gray-300 cursor-pointer">
+                                        <span class="text-sm text-gray-600">#2563EB (Bleu Ebrié Lagoon)</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Pied de page
+                                        (Footer)</label>
+                                    <textarea rows="3"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">Ebrié Lagoon CI au capital de 1 000 000 FCFA - RCCM: CI-ABJ-2023-B-12345 - CC: 1234567 A
+Siège social : Abidjan, Marcory Zone 4</textarea>
+                                    <p class="text-xs text-gray-500 mt-1">Apparaît en bas de chaque page du PDF.</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Mentions légales de
+                                        facturation</label>
+                                    <textarea rows="2"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">En cas de retard de paiement, une pénalité de 3% par mois sera appliquée.
+Validité du devis : 15 jours.</textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Signature & Cachet par
+                                        défaut</label>
+                                    <div
+                                        class="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                                        <div class="text-center">
+                                            <i class="fa-solid fa-signature text-gray-400 text-2xl mb-2"></i>
+                                            <p class="text-xs text-gray-500">Cliquer pour uploader une image PNG
+                                                transparente</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="pt-4">
+                                    <button
+                                        class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg shadow-md transition text-sm font-medium">
+                                        Sauvegarder le modèle
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- PDF Preview -->
+                            <div
+                                class="bg-gray-100 rounded-xl p-4 flex items-center justify-center border border-gray-200 min-h-[500px]">
+                                <div class="bg-white shadow-xl w-full max-w-sm aspect-[1/1.4] p-6 text-[10px] relative">
+                                    <!-- Fake PDF Content -->
+                                    <div class="flex justify-between border-b-2 border-blue-600 pb-4 mb-4">
+                                        <div
+                                            class="w-16 h-8 bg-gray-200 flex items-center justify-center text-gray-400">
+                                            LOGO</div>
+                                        <div class="text-right">
+                                            <h1 class="text-sm font-bold text-blue-600">FACTURE N° FAC-001</h1>
+                                            <p class="text-gray-500">Date: 10/06/2026</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between mb-6">
+                                        <div>
+                                            <p class="font-bold">Ebrié Lagoon CI</p>
+                                            <p class="text-gray-500">Zone 4, Abidjan</p>
+                                        </div>
+                                        <div class="text-right bg-gray-50 p-2 rounded">
+                                            <p class="font-bold">Facturé à:</p>
+                                            <p class="text-gray-700">Koffi Armand</p>
+                                            <p class="text-gray-500">07 07 12 34 56</p>
+                                        </div>
+                                    </div>
+                                    <table class="w-full mb-6">
+                                        <tr class="bg-blue-50 text-blue-800 font-bold">
+                                            <th class="text-left p-1">Désignation</th>
+                                            <th class="text-right p-1">Total</th>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-1 border-b text-gray-600">Pack Mariage</td>
+                                            <td class="text-right p-1 border-b font-medium">800 000</td>
+                                        </tr>
+                                    </table>
+                                    <div
+                                        class="absolute bottom-6 left-6 right-6 text-center text-gray-400 border-t pt-2">
+                                        Ebrié Lagoon CI - RCCM: CI-ABJ-2023-B-12345
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Utilisateurs & Rôles -->
+                    <div id="tab-users" class="p-6 md:p-8 block">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-800">Utilisateurs & Rôles</h3>
+                                <p class="text-sm text-gray-500">Gérez les accès à la plateforme Ebrié Lagoon</p>
+                            </div>
+                            <button onclick="toggleModal('newUserModal')"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm transition text-sm font-medium flex items-center">
+                                <i class="fa-solid fa-plus mr-2"></i> Ajouter Utilisateur
+                            </button>
+                        </div>
+
+                        <!-- Utilisateurs Table -->
+                        <div class="border border-gray-200 rounded-xl overflow-hidden mb-8">
+                            <table class="w-full text-left whitespace-nowrap">
+                                <thead>
+                                    <tr
+                                        class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-200">
+                                        <th class="px-6 py-4 font-medium">Utilisateur</th>
+                                        <th class="px-6 py-4 font-medium">Rôle</th>
+                                        <th class="px-6 py-4 font-medium">Dernière connexion</th>
+                                        <th class="px-6 py-4 font-medium text-center">Statut</th>
+                                        <th class="px-6 py-4 font-medium text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-gray-100">
+                                    <tr class="hover:bg-gray-50 transition">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center">
+                                                <img src="https://ui-avatars.com/api/?name=Lionel+Vithiano&background=0D8ABC&color=fff"
+                                                    class="w-8 h-8 rounded-full mr-3">
+                                                <div>
+                                                    <div class="font-bold text-gray-900">Lionel Vithiano</div>
+                                                    <div class="text-xs text-gray-500">l.vithiano@ebrielagoon.com</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span
+                                                class="px-2.5 py-1 bg-purple-100 text-purple-700 rounded text-xs font-semibold">Administrateur</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-gray-500 text-xs">Il y a 2 minutes</td>
+                                        <td class="px-6 py-4 text-center">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-green-500 inline-block"></span>
+                                        </td>
+                                        <td class="px-6 py-4 text-center text-gray-400">
+                                            <button class="hover:text-blue-600 transition mx-1"><i
+                                                    class="fa-solid fa-pen"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50 transition">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center">
+                                                <img src="https://ui-avatars.com/api/?name=Marc+Pilote&background=10B981&color=fff"
+                                                    class="w-8 h-8 rounded-full mr-3">
+                                                <div>
+                                                    <div class="font-bold text-gray-900">Marc Assouman</div>
+                                                    <div class="text-xs text-gray-500">m.assouman@ebrielagoon.com</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span
+                                                class="px-2.5 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">Pilote
+                                                / Staff</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-gray-500 text-xs">Hier, 18:30</td>
+                                        <td class="px-6 py-4 text-center">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-green-500 inline-block"></span>
+                                        </td>
+                                        <td class="px-6 py-4 text-center text-gray-400">
+                                            <button class="hover:text-blue-600 transition mx-1"><i
+                                                    class="fa-solid fa-pen"></i></button>
+                                            <button class="hover:text-red-600 transition mx-1"><i
+                                                    class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <hr class="border-gray-200 my-8">
+                    </div>
+
+                    <!-- Section: Tarification & Packs -->
+                    <div id="tab-tarifs" class="p-6 md:p-8 hidden">
+                        <div class="mb-6">
+                            <h3 class="text-lg font-bold text-gray-800">Catalogue des Tarifs (Aperçu)</h3>
+                            <p class="text-sm text-gray-500">Modifier les prix de base utilisés dans le générateur de
+                                devis</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Packs -->
+                            <div class="border border-gray-200 rounded-xl p-5">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="font-bold text-gray-700"><i
+                                            class="fa-solid fa-box mr-2 text-blue-500"></i>Packs Principaux</h4>
+                                    <button class="text-blue-600 text-xs font-semibold hover:underline">+
+                                        Ajouter</button>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-800 font-medium">Demande en mariage Premium</span>
+                                        <input type="text" value="800 000"
+                                            class="w-24 border border-gray-300 rounded px-2 py-1 text-right text-gray-700 font-medium">
+                                    </div>
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-800 font-medium">Anniversaire Premium</span>
+                                        <input type="text" value="600 000"
+                                            class="w-24 border border-gray-300 rounded px-2 py-1 text-right text-gray-700 font-medium">
+                                    </div>
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-800 font-medium">Corporate Premium</span>
+                                        <input type="text" value="1 000 000"
+                                            class="w-24 border border-gray-300 rounded px-2 py-1 text-right text-gray-700 font-medium">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Options -->
+                            <div class="border border-gray-200 rounded-xl p-5">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="font-bold text-gray-700"><i
+                                            class="fa-solid fa-layer-group mr-2 text-orange-500"></i>Options
+                                        Additionnelles</h4>
+                                    <button class="text-blue-600 text-xs font-semibold hover:underline">+
+                                        Ajouter</button>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-800 font-medium">Décoration romantique</span>
+                                        <input type="text" value="50 000"
+                                            class="w-24 border border-gray-300 rounded px-2 py-1 text-right text-gray-700 font-medium">
+                                    </div>
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-800 font-medium">Photographe</span>
+                                        <input type="text" value="100 000"
+                                            class="w-24 border border-gray-300 rounded px-2 py-1 text-right text-gray-700 font-medium">
+                                    </div>
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-800 font-medium">DJ professionnel</span>
+                                        <input type="text" value="200 000"
+                                            class="w-24 border border-gray-300 rounded px-2 py-1 text-right text-gray-700 font-medium">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end">
+                            <button
+                                class="bg-gray-800 hover:bg-gray-900 text-white px-5 py-2.5 rounded-lg shadow transition text-sm font-medium">
+                                Sauvegarder les tarifs
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal Ajouter Utilisateur -->
+    <div id="newUserModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity"
+            onclick="toggleModal('newUserModal')"></div>
+        <div
+            class="relative w-full max-w-md bg-white rounded-2xl shadow-2xl flex flex-col transform transition-all scale-95 opacity-0 duration-300 ease-in-out">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-800">Ajouter un Utilisateur</h3>
+                <button onclick="toggleModal('newUserModal')"
+                    class="text-gray-400 hover:text-red-500 transition text-xl"><i
+                        class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Nom Complet</label>
+                    <input type="text" placeholder="Ex: Jean Dupont"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Email (Identifiant)</label>
+                    <input type="email" placeholder="jean@ebrielagoon.com"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Rôle</label>
+                    <select
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="admin">Administrateur</option>
+                        <option value="commercial">Commercial / Vente</option>
+                        <option value="pilote">Pilote / Staff Technique</option>
+                    </select>
+                </div>
+                <div class="flex items-center mt-2">
+                    <input type="checkbox" id="sendInvite" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
+                        checked>
+                    <label for="sendInvite" class="ml-2 text-sm text-gray-700">Envoyer un email d'invitation avec mot de
+                        passe temporaire</label>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3 rounded-b-2xl">
+                <button onclick="toggleModal('newUserModal')"
+                    class="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Annuler</button>
+                <button
+                    class="px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-md">Ajouter</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleModal(modalID) {
+            const modal = document.getElementById(modalID);
+            const panel = modal.children[1];
+
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => {
+                    panel.classList.remove('scale-95', 'opacity-0');
+                    panel.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            } else {
+                panel.classList.remove('scale-100', 'opacity-100');
+                panel.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 300);
+            }
+        }
+
+        function switchTab(tabId) {
+            // Liste de toutes les sections
+            const tabs = ['societe', 'users', 'tarifs', 'pdf', 'notifications'];
+
+            tabs.forEach(t => {
+                // Gestion des boutons
+                const btn = document.getElementById('btn-tab-' + t);
+                if (btn) {
+                    if (t === tabId) {
+                        btn.classList.add('tab-active');
+                        btn.classList.remove('text-gray-600', 'hover:bg-gray-50', 'border-transparent');
+                    } else {
+                        btn.classList.remove('tab-active');
+                        btn.classList.add('text-gray-600', 'hover:bg-gray-50', 'border-transparent');
+                    }
+                }
+
+                // Gestion de l'affichage des contenus
+                const content = document.getElementById('tab-' + t);
+                if (content) {
+                    if (t === tabId) {
+                        content.classList.remove('hidden');
+                        content.classList.add('block');
+                    } else {
+                        content.classList.remove('block');
+                        content.classList.add('hidden');
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ebrié Lagoon Experience - Partenaires</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Outfit', sans-serif; background-color: #f3f4f6; }
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        .sidebar-item { transition: all 0.3s ease; border-radius: 0.5rem; }
+        .sidebar-item:hover { background-color: #ebf5ff; color: #1d4ed8; transform: translateX(5px); }
+        .sidebar-item.active { background-color: #2563eb; color: white; }
+    </style>
+</head>
+<body class="bg-slate-50 flex h-screen overflow-hidden text-gray-800">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white shadow-xl flex flex-col hidden md:flex z-30 relative shrink-0">
+        <div class="p-6 flex items-center justify-center border-b border-gray-100">
+            <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg mr-3">
+                <i class="fa-solid fa-water"></i>
+            </div>
+            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500">
+                Ebrié Lagoon
+            </h1>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+            <div class="px-2 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Principal</div>
+            <a href="dashboard_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-chart-pie w-6"></i> Tableau de bord
+            </a>
+            <a href="reservations_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-calendar-check w-6"></i> Réservations
+            </a>
+            <a href="finances_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-file-invoice-dollar w-6"></i> Finances & Devis
+            </a>
+            <a href="flotte_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-ship w-6"></i> Flotte & Opérations
+            </a>
+            <a href="incidents_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-triangle-exclamation w-6"></i> Incidents
+            </a>
+            <a href="partenaires_prototype.html" class="sidebar-item active flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-handshake w-6"></i> Partenaires
+            </a>
+            
+            <div class="px-2 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Administration</div>
+            <a href="clients_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-users w-6"></i> Clients
+            </a>
+            <a href="parametres_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-gear w-6"></i> Paramètres
+            </a>
+        </nav>
+        <div class="p-4 border-t border-gray-100">
+            <button class="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:text-red-600 transition">
+                <i class="fa-solid fa-sign-out-alt w-6"></i> Déconnexion
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto relative">
+        <!-- Header -->
+        <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between px-6 py-4">
+                <div class="flex items-center bg-gray-100 rounded-full px-4 py-2 w-96 focus-within:ring-2 focus-within:ring-blue-400 transition">
+                    <i class="fa-solid fa-search text-gray-400"></i>
+                    <input type="text" placeholder="Rechercher un partenaire (Hôtel, Agence)..." class="bg-transparent border-none outline-none ml-2 w-full text-sm">
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="relative p-2 text-gray-400 hover:text-gray-600 transition">
+                        <i class="fa-solid fa-bell text-xl"></i>
+                        <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                    <div class="flex items-center space-x-3 border-l pl-4 border-gray-200 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
+                        <img src="https://ui-avatars.com/api/?name=Lionel+Vithiano&background=0D8ABC&color=fff" alt="User" class="w-9 h-9 rounded-full shadow-sm">
+                        <div class="hidden md:block text-sm">
+                            <p class="font-semibold text-gray-700">M. Lionel Vithiano</p>
+                            <p class="text-xs text-gray-500">Administrateur</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="p-6 lg:p-8 space-y-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800 tracking-tight">Réseau de Partenaires</h2>
+                    <p class="text-sm text-gray-500 mt-1">Gérez vos collaborations (hôtels, traiteurs, agences de voyage)</p>
+                </div>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl shadow-md transition transform hover:-translate-y-0.5 text-sm font-medium flex items-center">
+                    <i class="fa-solid fa-plus mr-2"></i> Nouveau Partenaire
+                </button>
+            </div>
+
+            <!-- List -->
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Partenaire 1 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 text-xl font-bold mr-3">
+                                <i class="fa-solid fa-hotel"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 text-lg">Hôtel Ivoire</h3>
+                                <p class="text-xs text-purple-600 font-medium">Hôtellerie de luxe</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Actif</span>
+                    </div>
+                    <div class="space-y-2 text-sm text-gray-600 mb-4">
+                        <p><i class="fa-solid fa-percent mr-2 w-4"></i> Commission: 15%</p>
+                        <p><i class="fa-solid fa-link mr-2 w-4"></i> Réservations: 12 ce mois</p>
+                    </div>
+                    <button class="w-full py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-sm font-medium transition border border-gray-200">Voir les détails</button>
+                </div>
+
+                <!-- Partenaire 2 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 text-xl font-bold mr-3">
+                                <i class="fa-solid fa-utensils"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 text-lg">Délices d'Abidjan</h3>
+                                <p class="text-xs text-orange-600 font-medium">Traiteur & Restauration</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Actif</span>
+                    </div>
+                    <div class="space-y-2 text-sm text-gray-600 mb-4">
+                        <p><i class="fa-solid fa-handshake mr-2 w-4"></i> Type: Prestation externe</p>
+                        <p><i class="fa-solid fa-star mr-2 w-4"></i> Note: 4.8/5 (50 avis)</p>
+                    </div>
+                    <button class="w-full py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-sm font-medium transition border border-gray-200">Voir les détails</button>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

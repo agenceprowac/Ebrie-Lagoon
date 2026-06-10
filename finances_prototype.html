@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaS Ebrié Lagoon - Finances & Facturation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Outfit', sans-serif; background-color: #f3f4f6; }
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        .sidebar-item { transition: all 0.3s ease; border-radius: 0.5rem; }
+        .sidebar-item:hover { background-color: #ebf5ff; color: #1d4ed8; transform: translateX(5px); }
+        .sidebar-item.active { background-color: #2563eb; color: white; }
+        
+        /* Custom scrollbar for timeline */
+        .timeline-scroll::-webkit-scrollbar {
+            height: 6px;
+        }
+        .timeline-scroll::-webkit-scrollbar-thumb {
+            background-color: #CBD5E1;
+            border-radius: 4px;
+        }
+        
+        /* Internal tabs */
+        .tab-active {
+            background-color: #F8FAFC;
+            border-left: 3px solid #2563EB;
+            color: #1E3A8A;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 flex h-screen overflow-hidden text-gray-800">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white shadow-xl flex flex-col hidden md:flex z-30 relative shrink-0">
+        <div class="p-6 flex items-center justify-center border-b border-gray-100">
+            <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg mr-3">
+                <i class="fa-solid fa-water"></i>
+            </div>
+            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500">
+                Ebrié Lagoon
+            </h1>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+            <div class="px-2 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Principal</div>
+            <a href="dashboard_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-chart-pie w-6"></i> Tableau de bord
+            </a>
+            <a href="reservations_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-calendar-check w-6"></i> Réservations
+            </a>
+            <a href="finances_prototype.html" class="sidebar-item active flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-file-invoice-dollar w-6"></i> Finances & Devis
+            </a>
+            <a href="flotte_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-ship w-6"></i> Flotte & Opérations
+            </a>
+            <a href="incidents_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-triangle-exclamation w-6"></i> Incidents
+            </a>
+            <a href="partenaires_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-handshake w-6"></i> Partenaires
+            </a>
+            
+            <div class="px-2 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Administration</div>
+            <a href="clients_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-users w-6"></i> Clients
+            </a>
+            <a href="parametres_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-gear w-6"></i> Paramètres
+            </a>
+        </nav>
+        <div class="p-4 border-t border-gray-100">
+            <button class="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:text-red-600 transition">
+                <i class="fa-solid fa-sign-out-alt w-6"></i> Déconnexion
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto bg-slate-50 relative">
+        <!-- Header -->
+        <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between px-6 py-4">
+                <div class="flex items-center bg-gray-100 rounded-full px-4 py-2 w-96 focus-within:ring-2 focus-within:ring-blue-400 transition">
+                    <i class="fa-solid fa-search text-gray-400"></i>
+                    <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Rechercher (N°, Client)..." class="bg-transparent border-none outline-none ml-2 w-full text-sm">
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="relative p-2 text-gray-400 hover:text-gray-600 transition">
+                        <i class="fa-solid fa-bell text-xl"></i>
+                        <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                    <div class="flex items-center space-x-3 border-l pl-4 border-gray-200 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
+                        <img src="https://ui-avatars.com/api/?name=Lionel+Vithiano&background=0D8ABC&color=fff" alt="User" class="w-9 h-9 rounded-full shadow-sm">
+                        <div class="hidden md:block text-sm">
+                            <p class="font-semibold text-gray-700">M. Lionel Vithiano</p>
+                            <p class="text-xs text-gray-500">Administrateur</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="p-6 lg:p-8 space-y-6">
+            <!-- Header section -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Finances & Facturation</h2>
+                    <p class="text-sm text-gray-500">Gérez vos devis, factures et encaissements</p>
+                </div>
+                <button onclick="toggleModal('generatorModal')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl shadow-md transition transform hover:-translate-y-0.5 text-sm font-medium flex items-center">
+                    <i class="fa-solid fa-plus mr-2"></i> Nouveau Document
+                </button>
+            </div>
+
+            <!-- KPIs Finances -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 mb-1">CA Facturé (Mois)</p>
+                        <h3 class="text-2xl font-bold text-gray-800">4 520 000 FCFA</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600 text-xl">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 mb-1">Devis en attente</p>
+                        <h3 class="text-2xl font-bold text-gray-800">3 (1.2M FCFA)</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-600 text-xl">
+                        <i class="fa-solid fa-file-signature"></i>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 mb-1">Reste à recouvrer</p>
+                        <h3 class="text-2xl font-bold text-red-600">850 000 FCFA</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600 text-xl">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters Bar -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end">
+                <div class="flex-1 min-w-[150px]">
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Type de Document</label>
+                    <select class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Tous les types</option>
+                        <option value="devis">Devis</option>
+                        <option value="facture">Facture</option>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[150px]">
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Statut</label>
+                    <select class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Tous les statuts</option>
+                        <option value="attente">En attente / Brouillon</option>
+                        <option value="partiel">Partiellement payé</option>
+                        <option value="paye">Payé (Soldé)</option>
+                        <option value="annule">Annulé</option>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[150px]">
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Période (Création)</label>
+                    <input type="month" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center h-10">
+                        <i class="fa-solid fa-filter mr-2"></i> Filtrer
+                    </button>
+                </div>
+            </div>
+
+            <!-- Documents Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse whitespace-nowrap">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                                <th class="px-6 py-4 font-medium">N° Document</th>
+                                <th class="px-6 py-4 font-medium">Date Création</th>
+                                <th class="px-6 py-4 font-medium">Client</th>
+                                <th class="px-6 py-4 font-medium">Pack</th>
+                                <th class="px-6 py-4 font-medium text-right">Total (FCFA)</th>
+                                <th class="px-6 py-4 font-medium text-right">Reste à payer</th>
+                                <th class="px-6 py-4 font-medium">Statut</th>
+                                <th class="px-6 py-4 font-medium text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="documentsTableBody" class="text-sm divide-y divide-gray-100">
+                            <!-- Row 1: Facture Payée -->
+                            <tr class="hover:bg-blue-50/50 transition">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 rounded bg-blue-100 text-blue-600 flex items-center justify-center mr-3 font-bold text-xs">FAC</div>
+                                        <div>
+                                            <span class="font-semibold text-gray-900">FAC-EL-001</span>
+                                            <div class="text-xs text-gray-400 mt-0.5">Réf: RES-2026-068</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-gray-600">10/06/2026</td>
+                                <td class="px-6 py-4">
+                                    <div class="font-medium text-gray-800">Koffi Armand</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">07 07 12 34 56</div>
+                                </td>
+                                <td class="px-6 py-4 text-gray-600">Demande en mariage Premium</td>
+                                <td class="px-6 py-4 text-right font-bold text-gray-800">800 000</td>
+                                <td class="px-6 py-4 text-right text-gray-500">0</td>
+                                <td class="px-6 py-4">
+                                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold border border-green-200">Soldée</span>
+                                </td>
+                                <td class="px-6 py-4 text-center space-x-2">
+                                    <button class="text-gray-400 hover:text-red-500 transition" title="Télécharger PDF"><i class="fa-solid fa-file-pdf"></i></button>
+                                    <button class="text-blue-500 hover:text-blue-700 transition" title="Voir détails"><i class="fa-solid fa-eye"></i></button>
+                                </td>
+                            </tr>
+                            
+                            <!-- Row 2: Devis -->
+                            <tr class="hover:bg-blue-50/50 transition">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 rounded bg-orange-100 text-orange-600 flex items-center justify-center mr-3 font-bold text-xs">DEV</div>
+                                        <div>
+                                            <span class="font-semibold text-gray-900">DEV-EL-042</span>
+                                            <div class="text-xs text-gray-400 mt-0.5">Échéance: 15/06/2026</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-gray-600">11/06/2026</td>
+                                <td class="px-6 py-4">
+                                    <div class="font-medium text-gray-800">Entreprise Tiemoko</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">contact@tiemoko.ci</div>
+                                </td>
+                                <td class="px-6 py-4 text-gray-600">Corporate Premium</td>
+                                <td class="px-6 py-4 text-right font-bold text-gray-800">1 200 000</td>
+                                <td class="px-6 py-4 text-right text-gray-500">1 200 000</td>
+                                <td class="px-6 py-4">
+                                    <span class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold border border-orange-200">En attente</span>
+                                </td>
+                                <td class="px-6 py-4 text-center space-x-2">
+                                    <button class="text-gray-400 hover:text-green-600 transition" title="Transformer en Facture"><i class="fa-solid fa-money-check-dollar"></i></button>
+                                    <button class="text-gray-400 hover:text-red-500 transition" title="Télécharger PDF"><i class="fa-solid fa-file-pdf"></i></button>
+                                    <button class="text-blue-500 hover:text-blue-700 transition" title="Voir détails"><i class="fa-solid fa-eye"></i></button>
+                                </td>
+                            </tr>
+
+                            <!-- Row 3: Facture partiel -->
+                            <tr class="hover:bg-blue-50/50 transition">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 rounded bg-blue-100 text-blue-600 flex items-center justify-center mr-3 font-bold text-xs">FAC</div>
+                                        <div>
+                                            <span class="font-semibold text-gray-900">FAC-EL-002</span>
+                                            <div class="text-xs text-gray-400 mt-0.5">Réf: RES-2026-069</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-gray-600">11/06/2026</td>
+                                <td class="px-6 py-4">
+                                    <div class="font-medium text-gray-800">Sylla Fatou</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">01 02 03 04 05</div>
+                                </td>
+                                <td class="px-6 py-4 text-gray-600">Anniversaire Premium</td>
+                                <td class="px-6 py-4 text-right font-bold text-gray-800">600 000</td>
+                                <td class="px-6 py-4 text-right text-red-500 font-medium">300 000</td>
+                                <td class="px-6 py-4">
+                                    <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold border border-yellow-200">Acompte payé</span>
+                                </td>
+                                <td class="px-6 py-4 text-center space-x-2">
+                                    <button class="text-gray-400 hover:text-green-600 transition" title="Encaisser Solde"><i class="fa-solid fa-coins"></i></button>
+                                    <button class="text-gray-400 hover:text-red-500 transition" title="Télécharger PDF"><i class="fa-solid fa-file-pdf"></i></button>
+                                    <button class="text-blue-500 hover:text-blue-700 transition" title="Voir détails"><i class="fa-solid fa-eye"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Générateur Devis/Facture -->
+    <div id="generatorModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" onclick="toggleModal('generatorModal')"></div>
+        <div class="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] transform transition-all scale-95 opacity-0 duration-300 ease-in-out">
+            
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                <h3 class="text-lg font-bold text-gray-800">Créer un Document Financier</h3>
+                <button onclick="toggleModal('generatorModal')" class="text-gray-400 hover:text-red-500 transition text-xl">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto space-y-8 flex-1">
+                
+                <!-- Type de document & Client -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-semibold text-gray-800 border-b pb-2">Informations Générales</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Type de Document</label>
+                                <select id="docTypeSelect" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="devis">Devis Automatique</option>
+                                    <option value="facture">Facture Automatique</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Date</label>
+                                <input type="date" value="2026-06-09" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-semibold text-gray-800 border-b pb-2">Client</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="col-span-2">
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Nom du Client / Entreprise</label>
+                                <input type="text" id="clientNameInput" placeholder="Ex: Koffi Armand" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Téléphone</label>
+                                <input type="text" placeholder="Contact" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Email</label>
+                                <input type="email" placeholder="Email" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lignes de facturation -->
+                <div class="space-y-4">
+                    <h4 class="text-sm font-semibold text-gray-800 border-b pb-2">Prestations & Options</h4>
+                    
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
+                                <th class="px-4 py-2 rounded-tl-lg">Type</th>
+                                <th class="px-4 py-2">Désignation</th>
+                                <th class="px-4 py-2 text-right">Prix Unitaire (FCFA)</th>
+                                <th class="px-4 py-2 text-center w-24">Quantité</th>
+                                <th class="px-4 py-2 text-right rounded-tr-lg">Total Ligne</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoiceLines" class="divide-y divide-gray-100 text-sm">
+                            <!-- Pack Principal -->
+                            <tr>
+                                <td class="px-4 py-3"><span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">PACK</span></td>
+                                <td class="px-4 py-3">
+                                    <select id="packSelect" onchange="calculateTotals()" class="w-full border-none bg-transparent font-medium text-gray-800 focus:ring-0 outline-none cursor-pointer">
+                                        <option value="0" data-price="0">-- Choisir un pack --</option>
+                                        <option value="mariage" data-price="800000">Demande en mariage Premium</option>
+                                        <option value="anniversaire" data-price="600000">Anniversaire Premium</option>
+                                        <option value="corporate" data-price="1000000">Corporate Premium</option>
+                                    </select>
+                                    <div class="text-xs text-gray-500 mt-1">Bateau privatisé, musique, boissons</div>
+                                </td>
+                                <td class="px-4 py-3 text-right text-gray-600" id="packPrice">0</td>
+                                <td class="px-4 py-3 text-center">
+                                    <input type="number" id="packQty" value="1" min="1" onchange="calculateTotals()" class="w-16 border border-gray-300 rounded text-center px-1 py-1">
+                                </td>
+                                <td class="px-4 py-3 text-right font-medium text-gray-800" id="packTotal">0</td>
+                            </tr>
+                            
+                            <!-- Option 1 -->
+                            <tr>
+                                <td class="px-4 py-3"><span class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-bold">OPTION</span></td>
+                                <td class="px-4 py-3">
+                                    <select id="opt1Select" onchange="calculateTotals()" class="w-full border-none bg-transparent text-gray-700 focus:ring-0 outline-none cursor-pointer">
+                                        <option value="0" data-price="0">-- Ajouter une option --</option>
+                                        <option value="deco_romantique" data-price="50000">Décoration romantique</option>
+                                        <option value="deco_luxe" data-price="150000">Décoration luxe complète</option>
+                                        <option value="photo" data-price="100000">Photographe</option>
+                                        <option value="video" data-price="150000">Vidéaste</option>
+                                        <option value="dj" data-price="200000">DJ professionnel</option>
+                                    </select>
+                                </td>
+                                <td class="px-4 py-3 text-right text-gray-600" id="opt1Price">0</td>
+                                <td class="px-4 py-3 text-center">
+                                    <input type="number" id="opt1Qty" value="1" min="0" onchange="calculateTotals()" class="w-16 border border-gray-300 rounded text-center px-1 py-1">
+                                </td>
+                                <td class="px-4 py-3 text-right font-medium text-gray-800" id="opt1Total">0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button class="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center mt-2">
+                        <i class="fa-solid fa-plus-circle mr-1"></i> Ajouter une ligne
+                    </button>
+                </div>
+
+                <!-- Totaux -->
+                <div class="flex justify-end pt-4">
+                    <div class="w-full md:w-1/2 lg:w-1/3 space-y-3 bg-gray-50 p-5 rounded-xl border border-gray-100">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Total HT</span>
+                            <span class="font-medium text-gray-800" id="totalHT">0 FCFA</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">TVA (0%)</span>
+                            <span class="font-medium text-gray-800">0 FCFA</span>
+                        </div>
+                        <div class="flex justify-between text-lg font-bold border-t border-gray-200 pt-2">
+                            <span class="text-gray-900">Total TTC</span>
+                            <span class="text-blue-600" id="totalTTC">0 FCFA</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm pt-2">
+                            <label class="text-gray-600">Acompte versé</label>
+                            <input type="number" id="acompteInput" value="0" onchange="calculateTotals()" onkeyup="calculateTotals()" class="w-32 border border-gray-300 rounded px-2 py-1 text-right">
+                        </div>
+                        <div class="flex justify-between text-base font-bold text-red-600 pt-2">
+                            <span>Reste à Payer</span>
+                            <span id="resteAPayer">0 FCFA</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="p-6 border-t border-gray-100 bg-gray-50 flex justify-between rounded-b-2xl">
+                <button onclick="toggleModal('generatorModal')" class="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Annuler</button>
+                <div class="space-x-3">
+                    <button class="px-5 py-2.5 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-white transition bg-white shadow-sm">
+                        <i class="fa-solid fa-file-pdf text-red-500 mr-2"></i> Aperçu PDF
+                    </button>
+                    <button class="px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-md">
+                        <i class="fa-solid fa-save mr-2"></i> Enregistrer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleModal(modalID) {
+            const modal = document.getElementById(modalID);
+            const panel = modal.children[1];
+            
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => {
+                    panel.classList.remove('scale-95', 'opacity-0');
+                    panel.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            } else {
+                panel.classList.remove('scale-100', 'opacity-100');
+                panel.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 300);
+            }
+        }
+
+        function filterTable() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const tbody = document.getElementById('documentsTableBody');
+            const tr = tbody.getElementsByTagName('tr');
+
+            for (let i = 0; i < tr.length; i++) {
+                const tdNum = tr[i].getElementsByTagName('td')[0];
+                const tdClient = tr[i].getElementsByTagName('td')[2];
+                
+                if (tdNum && tdClient) {
+                    const txtNum = tdNum.textContent || tdNum.innerText;
+                    const txtClient = tdClient.textContent || tdClient.innerText;
+                    
+                    if (txtNum.toLowerCase().indexOf(filter) > -1 || txtClient.toLowerCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }       
+            }
+        }
+
+        // Logique de calcul dynamique Devis/Facture
+        function formatFCFA(number) {
+            return new Intl.NumberFormat('fr-FR').format(number);
+        }
+
+        function calculateTotals() {
+            // Pack
+            const packSelect = document.getElementById('packSelect');
+            const packPrice = parseInt(packSelect.options[packSelect.selectedIndex].getAttribute('data-price')) || 0;
+            const packQty = parseInt(document.getElementById('packQty').value) || 0;
+            const packTotal = packPrice * packQty;
+            
+            document.getElementById('packPrice').innerText = formatFCFA(packPrice);
+            document.getElementById('packTotal').innerText = formatFCFA(packTotal);
+
+            // Option 1
+            const opt1Select = document.getElementById('opt1Select');
+            const opt1Price = parseInt(opt1Select.options[opt1Select.selectedIndex].getAttribute('data-price')) || 0;
+            const opt1Qty = parseInt(document.getElementById('opt1Qty').value) || 0;
+            const opt1Total = opt1Price * opt1Qty;
+
+            document.getElementById('opt1Price').innerText = formatFCFA(opt1Price);
+            document.getElementById('opt1Total').innerText = formatFCFA(opt1Total);
+
+            // Totals
+            const totalTTC = packTotal + opt1Total;
+            document.getElementById('totalHT').innerText = formatFCFA(totalTTC) + ' FCFA';
+            document.getElementById('totalTTC').innerText = formatFCFA(totalTTC) + ' FCFA';
+
+            // Acompte / Reste à payer
+            const acompte = parseInt(document.getElementById('acompteInput').value) || 0;
+            const reste = Math.max(0, totalTTC - acompte);
+            
+            document.getElementById('resteAPayer').innerText = formatFCFA(reste) + ' FCFA';
+        }
+
+        // Interconnexion avec la page des réservations via Session Storage (Plus robuste que l'URL)
+        function checkSessionStorageAndOpenModal() {
+            const dataStr = sessionStorage.getItem('autoOpenGenerator');
+            
+            if (dataStr) {
+                // Nettoyer immédiatement pour éviter que la modale ne s'ouvre à nouveau au rafraîchissement
+                sessionStorage.removeItem('autoOpenGenerator');
+                
+                try {
+                    const data = JSON.parse(dataStr);
+                    
+                    // Attendre un instant que Tailwind et le DOM soient parfaitement prêts
+                    setTimeout(() => {
+                        // Ouvrir la modale
+                        toggleModal('generatorModal');
+                        
+                        // Remplir les champs avec un petit délai
+                        setTimeout(() => {
+                            if(data.client) {
+                                const clientInput = document.getElementById('clientNameInput');
+                                if (clientInput) clientInput.value = data.client;
+                            }
+                            if(data.pack) {
+                                const packSelect = document.getElementById('packSelect');
+                                if (packSelect && packSelect.querySelector(`option[value="${data.pack}"]`)) {
+                                    packSelect.value = data.pack;
+                                }
+                            }
+                            if(data.type) {
+                                const typeSelect = document.getElementById('docTypeSelect');
+                                if (typeSelect) typeSelect.value = data.type;
+                            }
+                            
+                            // Calculer les totaux automatiquement
+                            calculateTotals();
+                        }, 100);
+                    }, 300);
+                } catch(e) {
+                    console.error("Erreur de lecture du sessionStorage", e);
+                }
+            }
+        }
+        
+        // Exécuter après un léger délai initial
+        setTimeout(checkSessionStorageAndOpenModal, 100);
+    </script>
+</body>
+</html>

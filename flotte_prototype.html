@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaS Ebrié Lagoon - Flotte & Opérations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Outfit', sans-serif; background-color: #f3f4f6; }
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        .sidebar-item { transition: all 0.3s ease; border-radius: 0.5rem; }
+        .sidebar-item:hover { background-color: #ebf5ff; color: #1d4ed8; transform: translateX(5px); }
+        .sidebar-item.active { background-color: #2563eb; color: white; }
+        
+        /* Custom scrollbar for timeline */
+        .timeline-scroll::-webkit-scrollbar {
+            height: 6px;
+        }
+        .timeline-scroll::-webkit-scrollbar-thumb {
+            background-color: #CBD5E1;
+            border-radius: 4px;
+        }
+        
+        /* Internal tabs */
+        .tab-active {
+            background-color: #F8FAFC;
+            border-left: 3px solid #2563EB;
+            color: #1E3A8A;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 flex h-screen overflow-hidden text-gray-800">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white shadow-xl flex flex-col hidden md:flex z-30 relative shrink-0">
+        <div class="p-6 flex items-center justify-center border-b border-gray-100">
+            <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg mr-3">
+                <i class="fa-solid fa-water"></i>
+            </div>
+            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500">
+                Ebrié Lagoon
+            </h1>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+            <div class="px-2 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Principal</div>
+            <a href="dashboard_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-chart-pie w-6"></i> Tableau de bord
+            </a>
+            <a href="reservations_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-calendar-check w-6"></i> Réservations
+            </a>
+            <a href="finances_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-file-invoice-dollar w-6"></i> Finances & Devis
+            </a>
+            <a href="flotte_prototype.html" class="sidebar-item active flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-ship w-6"></i> Flotte & Opérations
+            </a>
+            <a href="incidents_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-triangle-exclamation w-6"></i> Incidents
+            </a>
+            <a href="partenaires_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-handshake w-6"></i> Partenaires
+            </a>
+            
+            <div class="px-2 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Administration</div>
+            <a href="clients_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-users w-6"></i> Clients
+            </a>
+            <a href="parametres_prototype.html" class="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i class="fa-solid fa-gear w-6"></i> Paramètres
+            </a>
+        </nav>
+        <div class="p-4 border-t border-gray-100">
+            <button class="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:text-red-600 transition">
+                <i class="fa-solid fa-sign-out-alt w-6"></i> Déconnexion
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto bg-slate-50 relative">
+        <!-- Header -->
+        <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between px-6 py-4">
+                <div class="flex items-center bg-gray-100 rounded-full px-4 py-2 w-96 focus-within:ring-2 focus-within:ring-blue-400 transition">
+                    <i class="fa-solid fa-search text-gray-400"></i>
+                    <input type="text" placeholder="Rechercher un bateau, un pilote..." class="bg-transparent border-none outline-none ml-2 w-full text-sm">
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="relative p-2 text-gray-400 hover:text-gray-600 transition">
+                        <i class="fa-solid fa-bell text-xl"></i>
+                        <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                    <div class="flex items-center space-x-3 border-l pl-4 border-gray-200 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
+                        <img src="https://ui-avatars.com/api/?name=Lionel+Vithiano&background=0D8ABC&color=fff" alt="User" class="w-9 h-9 rounded-full shadow-sm">
+                        <div class="hidden md:block text-sm">
+                            <p class="font-semibold text-gray-700">M. Lionel Vithiano</p>
+                            <p class="text-xs text-gray-500">Administrateur</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="p-6 lg:p-8 space-y-8">
+            <!-- Header section -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Flotte & Opérations</h2>
+                    <p class="text-sm text-gray-500">Gestion des catamarans, équipages et plannings du jour</p>
+                </div>
+                <div class="flex space-x-3">
+                    <button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-xl shadow-sm transition text-sm font-medium flex items-center">
+                        <i class="fa-solid fa-gas-pump mr-2 text-orange-500"></i> Saisir Carburant
+                    </button>
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl shadow-md transition transform hover:-translate-y-0.5 text-sm font-medium flex items-center">
+                        <i class="fa-solid fa-plus mr-2"></i> Nouvelle Affectation
+                    </button>
+                </div>
+            </div>
+
+            <!-- KPIs Flotte -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 mb-1">Navires Actifs</p>
+                        <h3 class="text-2xl font-bold text-gray-800">4 / 5</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-xl">
+                        <i class="fa-solid fa-ship"></i>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 mb-1">En Course (Actuel)</p>
+                        <h3 class="text-2xl font-bold text-green-600">2</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600 text-xl">
+                        <i class="fa-solid fa-water"></i>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 mb-1">En Maintenance</p>
+                        <h3 class="text-2xl font-bold text-red-600">1</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600 text-xl">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 mb-1">Équipage Dispo.</p>
+                        <h3 class="text-2xl font-bold text-gray-800">8</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 text-xl">
+                        <i class="fa-solid fa-users-gear"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Planning Opérationnel du Jour -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-800">Planning du 12 Juin 2026</h3>
+                    <div class="flex items-center space-x-2 text-sm">
+                        <button class="p-1 hover:bg-gray-100 rounded text-gray-500"><i class="fa-solid fa-chevron-left"></i></button>
+                        <span class="font-medium text-gray-700">Aujourd'hui</span>
+                        <button class="p-1 hover:bg-gray-100 rounded text-gray-500"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="p-6 overflow-x-auto timeline-scroll">
+                    <div class="min-w-[800px] relative">
+                        <!-- Timeline Header (Hours) -->
+                        <div class="flex border-b border-gray-200 pb-2 mb-4 text-xs font-semibold text-gray-400">
+                            <div class="w-32 flex-shrink-0">Navire</div>
+                            <div class="flex-1 flex justify-between px-2">
+                                <span>08:00</span><span>10:00</span><span>12:00</span><span>14:00</span><span>16:00</span><span>18:00</span><span>20:00</span><span>22:00</span>
+                            </div>
+                        </div>
+
+                        <!-- Boat 1 Timeline -->
+                        <div class="flex items-center mb-6 relative">
+                            <div class="w-32 flex-shrink-0 font-medium text-gray-800 text-sm flex items-center">
+                                <span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span> Lagune Express
+                            </div>
+                            <div class="flex-1 relative h-10 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden">
+                                <!-- Block de réservation -->
+                                <div class="absolute top-1 bottom-1 left-[30%] w-[25%] bg-blue-100 border border-blue-300 rounded-md px-2 py-1 flex items-center group cursor-pointer hover:bg-blue-200 transition z-10">
+                                    <div class="truncate text-xs text-blue-800 font-medium w-full">
+                                        <i class="fa-solid fa-ring mr-1 text-blue-500"></i> Mariage (M. Koffi)
+                                    </div>
+                                    <!-- Tooltip on hover -->
+                                    <div class="hidden group-hover:block absolute bottom-full left-0 mb-2 w-48 bg-gray-800 text-white text-xs rounded p-2 z-20 shadow-lg">
+                                        <p class="font-bold">Demande en mariage Premium</p>
+                                        <p>14:00 - 17:00</p>
+                                        <p>Pilote: Jean-Marc</p>
+                                        <p>Trajet: Assinie - Abidjan</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Boat 2 Timeline -->
+                        <div class="flex items-center mb-6 relative">
+                            <div class="w-32 flex-shrink-0 font-medium text-gray-800 text-sm flex items-center">
+                                <span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span> Étoile d'Ébrié
+                            </div>
+                            <div class="flex-1 relative h-10 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden">
+                                <div class="absolute top-1 bottom-1 left-[10%] w-[20%] bg-orange-100 border border-orange-300 rounded-md px-2 py-1 flex items-center group cursor-pointer hover:bg-orange-200 transition z-10">
+                                    <div class="truncate text-xs text-orange-800 font-medium w-full">
+                                        <i class="fa-solid fa-cake-candles mr-1 text-orange-500"></i> Anniv. (Mme Sylla)
+                                    </div>
+                                </div>
+                                <div class="absolute top-1 bottom-1 left-[60%] w-[30%] bg-purple-100 border border-purple-300 rounded-md px-2 py-1 flex items-center group cursor-pointer hover:bg-purple-200 transition z-10">
+                                    <div class="truncate text-xs text-purple-800 font-medium w-full">
+                                        <i class="fa-solid fa-briefcase mr-1 text-purple-500"></i> Corporate (Tiemoko)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Boat 3 Timeline (Maintenance) -->
+                        <div class="flex items-center mb-2 relative">
+                            <div class="w-32 flex-shrink-0 font-medium text-gray-800 text-sm flex items-center">
+                                <span class="w-2 h-2 rounded-full bg-red-500 mr-2"></span> L'Explorateur
+                            </div>
+                            <div class="flex-1 relative h-10 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden">
+                                <div class="absolute top-0 bottom-0 left-[0%] w-[100%] bg-red-50/50 flex items-center justify-center strip-pattern">
+                                    <div class="text-xs text-red-600 font-semibold tracking-wider flex items-center">
+                                        <i class="fa-solid fa-wrench mr-2"></i> MAINTENANCE MOTEUR PRÉVUE
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grille de la Flotte -->
+            <div>
+                <h3 class="text-xl font-bold text-gray-800 mb-6">Navires de la Flotte</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    
+                    <!-- Bateau 1 -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-md transition">
+                        <div class="h-48 bg-gray-200 relative overflow-hidden">
+                            <!-- Placeholder Image (Gradient) -->
+                            <div class="absolute inset-0 bg-gradient-to-br from-blue-400 to-cyan-600 opacity-80 group-hover:scale-105 transition duration-500"></div>
+                            <div class="absolute inset-0 flex flex-col justify-end p-4 bg-gradient-to-t from-gray-900/80 to-transparent">
+                                <h4 class="text-white font-bold text-xl">Lagune Express</h4>
+                                <p class="text-blue-100 text-sm flex items-center mt-1">
+                                    <i class="fa-solid fa-users mr-1.5"></i> Capacité: 15 pax
+                                </p>
+                            </div>
+                            <div class="absolute top-4 right-4 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                                Disponible
+                            </div>
+                        </div>
+                        <div class="p-5">
+                            <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+                                <div>
+                                    <p class="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Moteur</p>
+                                    <p class="text-gray-800 font-medium">2x 250 CV Yamaha</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Carburant</p>
+                                    <p class="text-gray-800 font-medium flex items-center">
+                                        <div class="w-full bg-gray-200 rounded-full h-1.5 mr-2">
+                                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 80%"></div>
+                                        </div>
+                                        80%
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex border-t border-gray-100 pt-4 space-x-2">
+                                <button class="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium transition">Détails</button>
+                                <button class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 rounded-lg text-sm font-medium transition">Planifier</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bateau 2 -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-md transition">
+                        <div class="h-48 bg-gray-200 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 opacity-80 group-hover:scale-105 transition duration-500"></div>
+                            <div class="absolute inset-0 flex flex-col justify-end p-4 bg-gradient-to-t from-gray-900/80 to-transparent">
+                                <h4 class="text-white font-bold text-xl">Étoile d'Ébrié</h4>
+                                <p class="text-indigo-100 text-sm flex items-center mt-1">
+                                    <i class="fa-solid fa-users mr-1.5"></i> Capacité: 25 pax
+                                </p>
+                            </div>
+                            <div class="absolute top-4 right-4 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                                En Course
+                            </div>
+                        </div>
+                        <div class="p-5">
+                            <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+                                <div>
+                                    <p class="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Moteur</p>
+                                    <p class="text-gray-800 font-medium">2x 300 CV Mercury</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Carburant</p>
+                                    <p class="text-gray-800 font-medium flex items-center">
+                                        <div class="w-full bg-gray-200 rounded-full h-1.5 mr-2">
+                                            <div class="bg-orange-500 h-1.5 rounded-full" style="width: 35%"></div>
+                                        </div>
+                                        35%
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex border-t border-gray-100 pt-4 space-x-2">
+                                <button class="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium transition">Détails</button>
+                                <button class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 rounded-lg text-sm font-medium transition">Suivi GPS</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bateau 3 -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-md transition">
+                        <div class="h-48 bg-gray-200 relative overflow-hidden">
+                            <div class="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-800 opacity-90 grayscale group-hover:scale-105 transition duration-500"></div>
+                            <div class="absolute inset-0 flex flex-col justify-end p-4 bg-gradient-to-t from-gray-900/80 to-transparent">
+                                <h4 class="text-white font-bold text-xl">L'Explorateur</h4>
+                                <p class="text-gray-300 text-sm flex items-center mt-1">
+                                    <i class="fa-solid fa-users mr-1.5"></i> Capacité: 10 pax
+                                </p>
+                            </div>
+                            <div class="absolute top-4 right-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm flex items-center">
+                                <i class="fa-solid fa-wrench mr-1"></i> Maintenance
+                            </div>
+                        </div>
+                        <div class="p-5">
+                            <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+                                <div class="col-span-2">
+                                    <p class="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Raison de l'immobilisation</p>
+                                    <p class="text-red-600 font-medium bg-red-50 p-2 rounded-lg text-sm border border-red-100">Révision des hélices (Prévu jusqu'au 15 Juin)</p>
+                                </div>
+                            </div>
+                            <div class="flex border-t border-gray-100 pt-4 space-x-2">
+                                <button class="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium transition">Journal tech.</button>
+                                <button class="flex-1 bg-green-50 hover:bg-green-100 text-green-700 py-2 rounded-lg text-sm font-medium transition">Marquer dispo.</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <style>
+        .strip-pattern {
+            background-image: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(239, 68, 68, 0.05) 10px,
+                rgba(239, 68, 68, 0.05) 20px
+            );
+        }
+    </style>
+</body>
+</html>
