@@ -23,7 +23,7 @@ type Finance = {
         email?: string;
     };
     reservations?: {
-        reference: string;
+        numero_reference: string;
     };
 };
 
@@ -34,7 +34,7 @@ type Client = {
 
 type Reservation = {
     id: string;
-    reference: string;
+    numero_reference: string;
     client_id: string;
     clients?: {
         nom: string;
@@ -77,7 +77,7 @@ export default function FinancesPage() {
         setIsLoading(true);
         const { data: finData, error: finError } = await supabase
             .from('finances')
-            .select('*, clients(nom, telephone, email), reservations(reference)')
+            .select('*, clients(nom, telephone, email), reservations(numero_reference)')
             .order('created_at', { ascending: false });
         if (finData) setFinances(finData as Finance[]);
         if (finError) console.error(finError);
@@ -85,7 +85,7 @@ export default function FinancesPage() {
         const { data: cliData } = await supabase.from('clients').select('id, nom');
         if (cliData) setClients(cliData as Client[]);
 
-        const { data: resData } = await supabase.from('reservations').select('id, reference, client_id, clients(nom)');
+        const { data: resData } = await supabase.from('reservations').select('id, numero_reference, client_id, clients(nom)');
         if (resData) setReservations(resData as unknown as Reservation[]);
 
         setIsLoading(false);
@@ -113,7 +113,7 @@ export default function FinancesPage() {
             reste_a_payer: resteAPayer
         };
 
-        const { data, error } = await supabase.from('finances').insert([payload]).select('*, clients(nom, telephone, email), reservations(reference)');
+        const { data, error } = await supabase.from('finances').insert([payload]).select('*, clients(nom, telephone, email), reservations(numero_reference)');
         if (error) {
             console.error(error);
             alert("Erreur lors de l'enregistrement : " + error.message);
@@ -285,7 +285,7 @@ export default function FinancesPage() {
                                                 <div className="font-medium text-gray-800">{doc.clients?.nom || 'Client inconnu'}</div>
                                                 <div className="text-xs text-gray-500 mt-0.5">{doc.clients?.telephone || ''}</div>
                                             </td>
-                                            <td className="px-6 py-4 text-gray-600">{doc.reservations?.reference || '-'}</td>
+                                            <td className="px-6 py-4 text-gray-600">{doc.reservations?.numero_reference || '-'}</td>
                                             <td className="px-6 py-4 text-right font-bold text-gray-800">{formatCurrency(doc.total_ttc)}</td>
                                             <td className={`px-6 py-4 text-right font-medium ${doc.reste_a_payer > 0 ? 'text-red-500' : 'text-gray-500'}`}>{formatCurrency(doc.reste_a_payer)}</td>
                                             <td className="px-6 py-4">
@@ -349,7 +349,7 @@ export default function FinancesPage() {
                                             <select value={reservationId} onChange={e => setReservationId(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                                                 <option value="">-- Aucune --</option>
                                                 {reservations.filter(r => r.client_id === clientId || !clientId).map(r => (
-                                                    <option key={r.id} value={r.id}>{r.reference} - {r.clients?.nom}</option>
+                                                    <option key={r.id} value={r.id}>{r.numero_reference} - {r.clients?.nom}</option>
                                                 ))}
                                             </select>
                                         </div>
