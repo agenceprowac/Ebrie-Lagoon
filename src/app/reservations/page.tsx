@@ -1,7 +1,7 @@
 
 "use client";
-import Link from &apos;next/link';
-import { useState, useEffect } from &apos;react';
+import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 export default function ReservationsPage() {
     const [activeTab, setActiveTab] = useState('all');
@@ -12,7 +12,7 @@ export default function ReservationsPage() {
     // Set default tab on mount
     useEffect(() => {
         // Just setting a default if needed
-        if (activeTab === &apos;all') {
+        if (activeTab === 'all') {
             setActiveTab('users'); // Default for parametres
         }
     }, []);
@@ -122,7 +122,7 @@ export default function ReservationsPage() {
                     <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">Tous les statuts</option>
                         <option value="brouillon">Brouillon</option>
-                        <option value="attente">En attente d&apos;acompte</option>
+                        <option value="attente">En attente d'acompte</option>
                         <option value="confirmee">Confirmée</option>
                         <option value="terminee">Terminée</option>
                         <option value="annulee">Annulée</option>
@@ -371,7 +371,7 @@ export default function ReservationsPage() {
     </main>
 
     
-    <div id="reservationModal" className={`fixed inset-0 z-50 items-center justify-center p-4 ${isReservationModalOpen ? &apos;flex&apos; : &apos;hidden'}`}>
+    <div id="reservationModal" className={`fixed inset-0 z-50 items-center justify-center p-4 ${isReservationModalOpen ? 'flex' : 'hidden'}`}>
         
         <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onClick={() => setIsReservationModalOpen(!isReservationModalOpen)}></div>
         
@@ -402,7 +402,7 @@ export default function ReservationsPage() {
                             <input type="email" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Canal d&apos;acquisition</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Canal d'acquisition</label>
                             <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                                 <option>WhatsApp</option>
                                 <option>Site Web</option>
@@ -494,7 +494,7 @@ export default function ReservationsPage() {
     </div>
 
     
-    <div id="detailsModal" className={`fixed inset-0 z-50 items-center justify-center p-4 ${isDetailsModalOpen ? &apos;flex&apos; : &apos;hidden'}`}>
+    <div id="detailsModal" className={`fixed inset-0 z-50 items-center justify-center p-4 ${isDetailsModalOpen ? 'flex' : 'hidden'}`}>
         
         <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onClick={() => setIsDetailsModalOpen(!isDetailsModalOpen)}></div>
         

@@ -1,8 +1,8 @@
 "use client";
 
-import Link from &apos;next/link';
-import { useEffect, useRef } from &apos;react';
-import Chart from &apos;chart.js/auto';
+import Link from 'next/link';
+import { useEffect, useRef } from 'react';
+import Chart from 'chart.js/auto';
 
 export default function Dashboard() {
     const revChartRef = useRef<HTMLCanvasElement>(null);
@@ -16,15 +16,15 @@ export default function Dashboard() {
             const ctx = revChartRef.current.getContext('2d');
             if (ctx) {
                 const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                gradient.addColorStop(0, &apos;rgba(37, 99, 235, 0.5)');
-                gradient.addColorStop(1, &apos;rgba(37, 99, 235, 0.0)');
+                gradient.addColorStop(0, 'rgba(37, 99, 235, 0.5)');
+                gradient.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
 
                 revChartInstance = new Chart(ctx, {
-                    type: &apos;line',
+                    type: 'line',
                     data: {
-                        labels: ['Jan', &apos;Fév', &apos;Mar', &apos;Avr', &apos;Mai', &apos;Juin'],
+                        labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
                         datasets: [{
-                            label: &apos;Revenus (FCFA)',
+                            label: 'Revenus (FCFA)',
                             data: [1200000, 1900000, 1500000, 2200000, 2800000, 4520000],
                             borderColor: '#2563eb',
                             backgroundColor: gradient,
@@ -54,9 +54,9 @@ export default function Dashboard() {
             const ctx = canalChartRef.current.getContext('2d');
             if (ctx) {
                 canalChartInstance = new Chart(ctx, {
-                    type: &apos;doughnut',
+                    type: 'doughnut',
                     data: {
-                        labels: ['WhatsApp', &apos;Site Web', &apos;Téléphone', &apos;Partenaires'],
+                        labels: ['WhatsApp', 'Site Web', 'Téléphone', 'Partenaires'],
                         datasets: [{
                             data: [45, 25, 20, 10],
                             backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6'],
@@ -69,7 +69,7 @@ export default function Dashboard() {
                         maintainAspectRatio: false,
                         cutout: '70%',
                         plugins: {
-                            legend: { position: &apos;bottom', labels: { usePointStyle: true, padding: 20 } }
+                            legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
                         }
                     }
                 });
@@ -159,7 +159,7 @@ export default function Dashboard() {
                 <div className="p-6 lg:p-8 space-y-6">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-800">Aperçu de l&apos;Activité</h2>
+                            <h2 className="text-2xl font-bold text-gray-800">Aperçu de l'Activité</h2>
                             <p className="text-sm text-gray-500">Statistiques du mois en cours (Juin 2026)</p>
                         </div>
                         <Link href="/reservations" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md transition transform hover:-translate-y-0.5 text-sm font-medium flex items-center">
@@ -173,7 +173,7 @@ export default function Dashboard() {
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-500 mb-1">Chiffre d&apos;Affaires</p>
+                                    <p className="text-sm font-medium text-gray-500 mb-1">Chiffre d'Affaires</p>
                                     <h3 className="text-2xl font-bold text-gray-800">4 520 000 FCFA</h3>
                                 </div>
                                 <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
@@ -198,7 +198,7 @@ export default function Dashboard() {
                             </div>
                             <div className="mt-4 flex items-center text-sm">
                                 <span className="text-green-500 font-medium"><i className="fa-solid fa-caret-up mr-1"></i>+5</span>
-                                <span className="text-gray-400 ml-2">nouvelles aujourd&apos;hui</span>
+                                <span className="text-gray-400 ml-2">nouvelles aujourd'hui</span>
                             </div>
                         </div>
                         {/* Card 3 */}

@@ -1,6 +1,6 @@
 "use client";
-import Link from &apos;next/link';
-import { useState, useEffect } from &apos;react';
+import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 
 type Navire = {
@@ -163,7 +163,7 @@ export default function FlottePage() {
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-500 mb-1">En Course (Actuel)</p>
-                                <h3 className="text-2xl font-bold text-green-600">{navires.filter(n => n.statut === &apos;En Course').length}</h3>
+                                <h3 className="text-2xl font-bold text-green-600">{navires.filter(n => n.statut === 'En Course').length}</h3>
                             </div>
                             <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600 text-xl">
                                 <i className="fa-solid fa-water"></i>
@@ -172,7 +172,7 @@ export default function FlottePage() {
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-500 mb-1">En Maintenance</p>
-                                <h3 className="text-2xl font-bold text-red-600">{navires.filter(n => n.statut === &apos;Maintenance').length}</h3>
+                                <h3 className="text-2xl font-bold text-red-600">{navires.filter(n => n.statut === 'Maintenance').length}</h3>
                             </div>
                             <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600 text-xl">
                                 <i className="fa-solid fa-screwdriver-wrench"></i>
@@ -206,14 +206,14 @@ export default function FlottePage() {
                                 navires.map(navire => (
                                     <div key={navire.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-md transition">
                                         <div className="h-48 bg-gray-200 relative overflow-hidden">
-                                            <div className={`absolute inset-0 opacity-80 group-hover:scale-105 transition duration-500 ${navire.statut === &apos;Maintenance&apos; ? &apos;bg-gradient-to-br from-gray-600 to-gray-800 grayscale&apos; : navire.statut === &apos;En Course&apos; ? &apos;bg-gradient-to-br from-indigo-500 to-purple-600' : &apos;bg-gradient-to-br from-blue-400 to-cyan-600'}`}></div>
+                                            <div className={`absolute inset-0 opacity-80 group-hover:scale-105 transition duration-500 ${navire.statut === 'Maintenance' ? 'bg-gradient-to-br from-gray-600 to-gray-800 grayscale' : navire.statut === 'En Course' ? 'bg-gradient-to-br from-indigo-500 to-purple-600' : 'bg-gradient-to-br from-blue-400 to-cyan-600'}`}></div>
                                             <div className="absolute inset-0 flex flex-col justify-end p-4 bg-gradient-to-t from-gray-900/80 to-transparent">
                                                 <h4 className="text-white font-bold text-xl">{navire.nom_navire}</h4>
                                                 <p className="text-blue-100 text-sm flex items-center mt-1">
                                                     <i className="fa-solid fa-users mr-1.5"></i> Capacité: {navire.capacite} pax
                                                 </p>
                                             </div>
-                                            <div className={`absolute top-4 right-4 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm ${navire.statut === &apos;Maintenance&apos; ? &apos;bg-red-500' : navire.statut === &apos;En Course&apos; ? &apos;bg-blue-500' : &apos;bg-green-500'}`}>
+                                            <div className={`absolute top-4 right-4 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm ${navire.statut === 'Maintenance' ? 'bg-red-500' : navire.statut === 'En Course' ? 'bg-blue-500' : 'bg-green-500'}`}>
                                                 {navire.statut}
                                             </div>
                                         </div>
@@ -221,16 +221,16 @@ export default function FlottePage() {
                                             <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                                                 <div>
                                                     <p className="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Moteur</p>
-                                                    <p className="text-gray-800 font-medium">{navire.moteur || &apos;Non spécifié'}</p>
+                                                    <p className="text-gray-800 font-medium">{navire.moteur || 'Non spécifié'}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Type</p>
                                                     <p className="text-gray-800 font-medium">{navire.type_navire}</p>
                                                 </div>
-                                                {navire.statut === &apos;Maintenance&apos; && (
+                                                {navire.statut === 'Maintenance' && (
                                                     <div className="col-span-2 mt-2">
-                                                        <p className="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Raison de l&apos;immobilisation</p>
-                                                        <p className="text-red-600 font-medium bg-red-50 p-2 rounded-lg text-sm border border-red-100">{navire.raison_immobilisation || &apos;Non spécifiée'}</p>
+                                                        <p className="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Raison de l'immobilisation</p>
+                                                        <p className="text-red-600 font-medium bg-red-50 p-2 rounded-lg text-sm border border-red-100">{navire.raison_immobilisation || 'Non spécifiée'}</p>
                                                     </div>
                                                 )}
                                             </div>
@@ -292,7 +292,7 @@ export default function FlottePage() {
                         <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3">
                             <button onClick={() => setIsAddShipModalOpen(false)} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Annuler</button>
                             <button onClick={handleAddNavire} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-md disabled:opacity-50">
-                                {isSubmitting ? &apos;Ajout...' : &apos;Ajouter le Navire'}
+                                {isSubmitting ? 'Ajout...' : 'Ajouter le Navire'}
                             </button>
                         </div>
                     </div>
