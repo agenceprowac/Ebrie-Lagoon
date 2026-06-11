@@ -1,6 +1,6 @@
 "use client";
-import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import Link from &apos;next/link';
+import { useState, useEffect } from &apos;react';
 import { supabase } from '@/utils/supabase';
 
 type Incident = {
@@ -83,7 +83,7 @@ export default function IncidentsPage() {
         setIsLoading(false);
     };
 
-    const handleSaveIncident = async (type: 'Incident' | 'Réclamation') => {
+    const handleSaveIncident = async (type: &apos;Incident&apos; | &apos;Réclamation') => {
         if (!dateHeure || !nature || !gravite) {
             return alert('Veuillez remplir les champs obligatoires.');
         }
@@ -99,14 +99,14 @@ export default function IncidentsPage() {
             secours_contactes: secoursContactes,
             mesures_immediates: mesuresImmediates,
             type_declaration: type,
-            statut: 'En traitement'
+            statut: &apos;En traitement'
         };
 
         const { data, error } = await supabase.from('incidents').insert([payload]).select('*, reservations(clients(nom))');
         
         if (error) {
             console.error(error);
-            alert("Erreur lors de l'enregistrement : " + error.message);
+            alert("Erreur lors de l&apos;enregistrement : " + error.message);
         } else if (data) {
             setIncidents([data[0] as Incident, ...incidents]);
             setIsNewIncidentModalOpen(false);
@@ -114,7 +114,7 @@ export default function IncidentsPage() {
             
             // Reset form
             const randomNum = Math.floor(1000 + Math.random() * 9000);
-            setNumeroIncident(type === 'Incident' ? `INC-${randomNum}` : `REC-${randomNum}`);
+            setNumeroIncident(type === &apos;Incident&apos; ? `INC-${randomNum}` : `REC-${randomNum}`);
             setDateHeure('');
             setReservationId('');
             setLieuExact('');
@@ -129,11 +129,11 @@ export default function IncidentsPage() {
     const formatDateTime = (dtStr: string) => {
         if (!dtStr) return '';
         const dt = new Date(dtStr);
-        return dt.toLocaleDateString('fr-FR') + ' ' + dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        return dt.toLocaleDateString('fr-FR') + ' ' + dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit&apos; });
     };
 
-    const listIncidents = incidents.filter(i => i.type_declaration === 'Incident');
-    const listReclamations = incidents.filter(i => i.type_declaration === 'Réclamation');
+    const listIncidents = incidents.filter(i => i.type_declaration === &apos;Incident');
+    const listReclamations = incidents.filter(i => i.type_declaration === &apos;Réclamation');
 
     return (
         <div className="flex h-screen overflow-hidden text-gray-800 bg-slate-50 font-sans">
@@ -209,7 +209,7 @@ export default function IncidentsPage() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h2 className="text-3xl font-bold text-gray-800 tracking-tight">Gestion des Incidents & Réclamations</h2>
-                            <p className="text-sm text-gray-500 mt-1">Registre officiel pour l'exploitation et le reporting d'assurance</p>
+                            <p className="text-sm text-gray-500 mt-1">Registre officiel pour l&apos;exploitation et le reporting d&apos;assurance</p>
                         </div>
                         <div className="flex space-x-3">
                             <button onClick={() => {
@@ -230,22 +230,22 @@ export default function IncidentsPage() {
                     </div>
 
                     <div className="flex space-x-8 border-b border-gray-200 mb-6">
-                        <button onClick={() => setActiveTab('incidents')} className={`tab-btn pb-3 text-gray-600 font-medium flex items-center ${activeTab === 'incidents' ? 'active border-b-2 border-blue-600 text-blue-600' : 'border-b-2 border-transparent'}`}>
+                        <button onClick={() => setActiveTab('incidents')} className={`tab-btn pb-3 text-gray-600 font-medium flex items-center ${activeTab === &apos;incidents&apos; ? &apos;active border-b-2 border-blue-600 text-blue-600' : &apos;border-b-2 border-transparent'}`}>
                             <i className="fa-solid fa-triangle-exclamation mr-2"></i> Incidents & Urgences
                             <span className="ml-2 bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs">{listIncidents.length}</span>
                         </button>
-                        <button onClick={() => setActiveTab('reclamations')} className={`tab-btn pb-3 text-gray-600 font-medium flex items-center hover:text-gray-900 ${activeTab === 'reclamations' ? 'active border-b-2 border-blue-600 text-blue-600' : 'border-b-2 border-transparent'}`}>
+                        <button onClick={() => setActiveTab('reclamations')} className={`tab-btn pb-3 text-gray-600 font-medium flex items-center hover:text-gray-900 ${activeTab === &apos;reclamations&apos; ? &apos;active border-b-2 border-blue-600 text-blue-600' : &apos;border-b-2 border-transparent'}`}>
                             <i className="fa-solid fa-user-injured mr-2"></i> Réclamations Clients
                             <span className="ml-2 bg-orange-100 text-orange-600 py-0.5 px-2 rounded-full text-xs">{listReclamations.length}</span>
                         </button>
                     </div>
 
                     {/* Onglet Incidents */}
-                    <div className={`space-y-6 ${activeTab === 'incidents' ? 'block' : 'hidden'}`}>
+                    <div className={`space-y-6 ${activeTab === &apos;incidents&apos; ? &apos;block&apos; : &apos;hidden'}`}>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">En cours</p>
-                                <h3 className="text-2xl font-bold text-red-600">{listIncidents.filter(i => i.statut !== 'Clôturé').length}</h3>
+                                <h3 className="text-2xl font-bold text-red-600">{listIncidents.filter(i => i.statut !== &apos;Clôturé').length}</h3>
                             </div>
                         </div>
 
@@ -277,11 +277,11 @@ export default function IncidentsPage() {
                                                 <td className="px-4 py-3 font-bold text-gray-800">{inc.numero_incident}</td>
                                                 <td className="px-4 py-3 text-gray-500">{formatDateTime(inc.date_heure)}</td>
                                                 <td className="px-4 py-3">
-                                                    <div className="font-medium text-blue-600">{inc.reservations?.clients?.nom || 'Non spécifié'}</div>
+                                                    <div className="font-medium text-blue-600">{inc.reservations?.clients?.nom || &apos;Non spécifié'}</div>
                                                 </td>
                                                 <td className="px-4 py-3 font-medium text-gray-700">{inc.nature}</td>
                                                 <td className="px-4 py-3 text-center">
-                                                    <span className={`px-2 py-1 rounded text-xs font-bold ${inc.gravite === 'Critique' ? 'bg-red-100 text-red-700' : inc.gravite === 'Moyen' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                                                    <span className={`px-2 py-1 rounded text-xs font-bold ${inc.gravite === &apos;Critique&apos; ? &apos;bg-red-100 text-red-700' : inc.gravite === &apos;Moyen&apos; ? &apos;bg-yellow-100 text-yellow-700' : &apos;bg-green-100 text-green-700'}`}>
                                                         {inc.gravite}
                                                     </span>
                                                 </td>
@@ -300,7 +300,7 @@ export default function IncidentsPage() {
                     </div>
 
                     {/* Onglet Réclamations */}
-                    <div className={`space-y-6 ${activeTab === 'reclamations' ? 'block' : 'hidden'}`}>
+                    <div className={`space-y-6 ${activeTab === &apos;reclamations&apos; ? &apos;block&apos; : &apos;hidden'}`}>
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                                 <h3 className="font-bold text-gray-700">Registre des Réclamations</h3>
@@ -328,7 +328,7 @@ export default function IncidentsPage() {
                                                 <td className="px-4 py-3 font-bold text-gray-800">{rec.numero_incident}</td>
                                                 <td className="px-4 py-3 text-gray-500">{formatDateTime(rec.date_heure)}</td>
                                                 <td className="px-4 py-3">
-                                                    <div className="font-medium text-gray-900">{rec.reservations?.clients?.nom || 'Non spécifié'}</div>
+                                                    <div className="font-medium text-gray-900">{rec.reservations?.clients?.nom || &apos;Non spécifié'}</div>
                                                 </td>
                                                 <td className="px-4 py-3 font-medium text-gray-700">{rec.nature}</td>
                                                 <td className="px-4 py-3 text-center">
@@ -389,7 +389,7 @@ export default function IncidentsPage() {
                                 <h4 className="font-bold text-gray-700 mb-3 text-sm border-b pb-1">2. Description & Gravité</h4>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="col-span-2">
-                                        <label className="block text-xs font-medium text-gray-500 mb-1">Nature de l'incident *</label>
+                                        <label className="block text-xs font-medium text-gray-500 mb-1">Nature de l&apos;incident *</label>
                                         <textarea rows={3} value={nature} onChange={e => setNature(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                                     </div>
                                     <div>
@@ -419,7 +419,7 @@ export default function IncidentsPage() {
                         <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3 rounded-b-2xl">
                             <button onClick={() => setIsNewIncidentModalOpen(false)} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Annuler</button>
                             <button onClick={() => handleSaveIncident('Incident')} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition shadow-md disabled:opacity-50">
-                                {isSubmitting ? 'Enregistrement...' : "Enregistrer l'incident"}
+                                {isSubmitting ? &apos;Enregistrement...' : "Enregistrer l&apos;incident"}
                             </button>
                         </div>
                     </div>
@@ -468,7 +468,7 @@ export default function IncidentsPage() {
                         <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3 rounded-b-2xl">
                             <button onClick={() => setIsNewReclamationModalOpen(false)} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Annuler</button>
                             <button onClick={() => handleSaveIncident('Réclamation')} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-orange-500 text-white hover:bg-orange-600 transition shadow-md disabled:opacity-50">
-                                {isSubmitting ? 'Enregistrement...' : "Enregistrer la réclamation"}
+                                {isSubmitting ? &apos;Enregistrement...' : "Enregistrer la réclamation"}
                             </button>
                         </div>
                     </div>

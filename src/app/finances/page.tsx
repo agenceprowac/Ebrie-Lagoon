@@ -1,6 +1,6 @@
 "use client";
-import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import Link from &apos;next/link';
+import { useState, useEffect } from &apos;react';
 import { supabase } from '@/utils/supabase';
 
 type Finance = {
@@ -96,7 +96,7 @@ export default function FinancesPage() {
         setIsSubmitting(true);
 
         const randomNum = Math.floor(1000 + Math.random() * 9000);
-        const prefix = docType === 'Facture' ? 'FAC' : 'DEV';
+        const prefix = docType === &apos;Facture&apos; ? &apos;FAC&apos; : &apos;DEV';
         const numDoc = `${prefix}-${randomNum}`;
 
         const payload = {
@@ -105,7 +105,7 @@ export default function FinancesPage() {
             date_emission: dateEmission,
             client_id: clientId,
             reservation_id: reservationId || null,
-            statut: docType === 'Devis' ? 'En attente' : (acompte >= totalTTC ? 'Soldée' : (acompte > 0 ? 'Acompte payé' : 'En attente')),
+            statut: docType === &apos;Devis&apos; ? &apos;En attente&apos; : (acompte >= totalTTC ? &apos;Soldée&apos; : (acompte > 0 ? &apos;Acompte payé' : &apos;En attente')),
             total_ht: totalHT,
             tva: tva,
             total_ttc: totalTTC,
@@ -116,7 +116,7 @@ export default function FinancesPage() {
         const { data, error } = await supabase.from('finances').insert([payload]).select('*, clients(nom, telephone, email), reservations(reference)');
         if (error) {
             console.error(error);
-            alert("Erreur lors de l'enregistrement : " + error.message);
+            alert("Erreur lors de l&apos;enregistrement : " + error.message);
         } else if (data) {
             setFinances([data[0] as Finance, ...finances]);
             setIsGeneratorModalOpen(false);
@@ -135,7 +135,7 @@ export default function FinancesPage() {
     };
 
     const formatCurrency = (val: number) => {
-        return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' }).format(val);
+        return new Intl.NumberFormat('fr-FR', { style: &apos;currency', currency: &apos;XOF&apos; }).format(val);
     };
 
     return (
@@ -223,7 +223,7 @@ export default function FinancesPage() {
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-500 mb-1">CA Facturé (Mois)</p>
-                                <h3 className="text-2xl font-bold text-gray-800">{formatCurrency(finances.filter(f => f.type_document === 'Facture').reduce((sum, f) => sum + f.total_ttc, 0))}</h3>
+                                <h3 className="text-2xl font-bold text-gray-800">{formatCurrency(finances.filter(f => f.type_document === &apos;Facture').reduce((sum, f) => sum + f.total_ttc, 0))}</h3>
                             </div>
                             <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600 text-xl">
                                 <i className="fa-solid fa-chart-line"></i>
@@ -232,7 +232,7 @@ export default function FinancesPage() {
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-500 mb-1">Devis en attente</p>
-                                <h3 className="text-2xl font-bold text-gray-800">{finances.filter(f => f.type_document === 'Devis').length}</h3>
+                                <h3 className="text-2xl font-bold text-gray-800">{finances.filter(f => f.type_document === &apos;Devis').length}</h3>
                             </div>
                             <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-600 text-xl">
                                 <i className="fa-solid fa-file-signature"></i>
@@ -241,7 +241,7 @@ export default function FinancesPage() {
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-500 mb-1">Reste à recouvrer</p>
-                                <h3 className="text-2xl font-bold text-red-600">{formatCurrency(finances.filter(f => f.type_document === 'Facture').reduce((sum, f) => sum + f.reste_a_payer, 0))}</h3>
+                                <h3 className="text-2xl font-bold text-red-600">{formatCurrency(finances.filter(f => f.type_document === &apos;Facture').reduce((sum, f) => sum + f.reste_a_payer, 0))}</h3>
                             </div>
                             <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600 text-xl">
                                 <i className="fa-solid fa-wallet"></i>
@@ -272,8 +272,8 @@ export default function FinancesPage() {
                                         <tr key={doc.id} className="hover:bg-blue-50/50 transition">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center">
-                                                    <div className={`w-8 h-8 rounded flex items-center justify-center mr-3 font-bold text-xs ${doc.type_document === 'Facture' ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-orange-600'}`}>
-                                                        {doc.type_document === 'Facture' ? 'FAC' : 'DEV'}
+                                                    <div className={`w-8 h-8 rounded flex items-center justify-center mr-3 font-bold text-xs ${doc.type_document === &apos;Facture&apos; ? &apos;bg-blue-100 text-blue-600' : &apos;bg-orange-100 text-orange-600'}`}>
+                                                        {doc.type_document === &apos;Facture&apos; ? &apos;FAC&apos; : &apos;DEV'}
                                                     </div>
                                                     <div>
                                                         <span className="font-semibold text-gray-900">{doc.numero_document}</span>
@@ -282,14 +282,14 @@ export default function FinancesPage() {
                                             </td>
                                             <td className="px-6 py-4 text-gray-600">{new Date(doc.date_emission).toLocaleDateString('fr-FR')}</td>
                                             <td className="px-6 py-4">
-                                                <div className="font-medium text-gray-800">{doc.clients?.nom || 'Client inconnu'}</div>
+                                                <div className="font-medium text-gray-800">{doc.clients?.nom || &apos;Client inconnu'}</div>
                                                 <div className="text-xs text-gray-500 mt-0.5">{doc.clients?.telephone || ''}</div>
                                             </td>
                                             <td className="px-6 py-4 text-gray-600">{doc.reservations?.reference || '-'}</td>
                                             <td className="px-6 py-4 text-right font-bold text-gray-800">{formatCurrency(doc.total_ttc)}</td>
-                                            <td className={`px-6 py-4 text-right font-medium ${doc.reste_a_payer > 0 ? 'text-red-500' : 'text-gray-500'}`}>{formatCurrency(doc.reste_a_payer)}</td>
+                                            <td className={`px-6 py-4 text-right font-medium ${doc.reste_a_payer > 0 ? &apos;text-red-500' : &apos;text-gray-500'}`}>{formatCurrency(doc.reste_a_payer)}</td>
                                             <td className="px-6 py-4">
-                                                <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${doc.statut === 'Soldée' ? 'bg-green-100 text-green-700 border-green-200' : doc.statut === 'Acompte payé' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'bg-orange-100 text-orange-700 border-orange-200'}`}>
+                                                <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${doc.statut === &apos;Soldée&apos; ? &apos;bg-green-100 text-green-700 border-green-200' : doc.statut === &apos;Acompte payé' ? &apos;bg-yellow-100 text-yellow-700 border-yellow-200' : &apos;bg-orange-100 text-orange-700 border-orange-200'}`}>
                                                     {doc.statut}
                                                 </span>
                                             </td>
@@ -436,7 +436,7 @@ export default function FinancesPage() {
                         <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3 rounded-b-2xl">
                             <button onClick={() => setIsGeneratorModalOpen(false)} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Annuler</button>
                             <button onClick={handleSaveDocument} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-md disabled:opacity-50">
-                                {isSubmitting ? 'Enregistrement...' : "Enregistrer"}
+                                {isSubmitting ? &apos;Enregistrement...' : "Enregistrer"}
                             </button>
                         </div>
                     </div>

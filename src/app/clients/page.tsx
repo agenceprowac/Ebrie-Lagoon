@@ -1,7 +1,7 @@
 
 "use client";
-import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import Link from &apos;next/link';
+import { useState, useEffect } from &apos;react';
 
 export default function ClientsPage() {
     const [activeTab, setActiveTab] = useState('all');
@@ -12,7 +12,7 @@ export default function ClientsPage() {
     // Set default tab on mount
     useEffect(() => {
         // Just setting a default if needed
-        if (activeTab === 'all') {
+        if (activeTab === &apos;all') {
             setActiveTab('users'); // Default for parametres
         }
     }, []);
@@ -279,7 +279,7 @@ export default function ClientsPage() {
     </main>
 
     
-    <div id="newClientModal" className={`fixed inset-0 z-50 items-center justify-center p-4 ${isNewClientModalOpen ? 'flex' : 'hidden'}`}>
+    <div id="newClientModal" className={`fixed inset-0 z-50 items-center justify-center p-4 ${isNewClientModalOpen ? &apos;flex&apos; : &apos;hidden'}`}>
         <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" onClick={() => setIsNewClientModalOpen(!isNewClientModalOpen)}></div>
         <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl flex flex-col transform transition-all scale-100 opacity-100 duration-300 ease-in-out">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
@@ -322,7 +322,7 @@ export default function ClientsPage() {
     </div>
 
     
-    <div id="historyModal" className={`fixed inset-0 z-50 items-center justify-center p-4 ${isHistoryModalOpen ? 'flex' : 'hidden'}`}>
+    <div id="historyModal" className={`fixed inset-0 z-50 items-center justify-center p-4 ${isHistoryModalOpen ? &apos;flex&apos; : &apos;hidden'}`}>
         <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" onClick={() => setIsHistoryModalOpen(!isHistoryModalOpen)}></div>
         <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl flex flex-col transform transition-all scale-100 opacity-100 duration-300 ease-in-out max-h-[90vh]">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">

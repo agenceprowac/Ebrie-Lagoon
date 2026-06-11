@@ -1,7 +1,7 @@
 
 "use client";
-import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import Link from &apos;next/link';
+import { useState, useEffect } from &apos;react';
 
 export default function PartenairesPage() {
     const [activeTab, setActiveTab] = useState('all');
@@ -10,7 +10,7 @@ export default function PartenairesPage() {
     // Set default tab on mount
     useEffect(() => {
         // Just setting a default if needed
-        if (activeTab === 'all') {
+        if (activeTab === &apos;all') {
             setActiveTab('users'); // Default for parametres
         }
     }, []);
@@ -133,7 +133,7 @@ export default function PartenairesPage() {
                                 <i className="fa-solid fa-utensils"></i>
                             </div>
                             <div>
-                                <h3 className="font-bold text-gray-800 text-lg">Délices d'Abidjan</h3>
+                                <h3 className="font-bold text-gray-800 text-lg">Délices d&apos;Abidjan</h3>
                                 <p className="text-xs text-orange-600 font-medium">Traiteur & Restauration</p>
                             </div>
                         </div>

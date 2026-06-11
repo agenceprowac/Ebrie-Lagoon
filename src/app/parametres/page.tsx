@@ -1,7 +1,7 @@
 
 "use client";
-import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import Link from &apos;next/link';
+import { useState, useEffect } from &apos;react';
 
 export default function ParametresPage() {
     const [activeTab, setActiveTab] = useState('all');
@@ -11,7 +11,7 @@ export default function ParametresPage() {
     // Set default tab on mount
     useEffect(() => {
         // Just setting a default if needed
-        if (activeTab === 'all') {
+        if (activeTab === &apos;all') {
             setActiveTab('users'); // Default for parametres
         }
     }, []);
@@ -109,7 +109,7 @@ export default function ParametresPage() {
         
         <div className="p-6 lg:p-8 flex-1 flex flex-col">
             <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">Paramètres de l'Application</h2>
+                <h2 className="text-2xl font-bold text-gray-800">Paramètres de l&apos;Application</h2>
                 <p className="text-sm text-gray-500">Configurez votre environnement, vos utilisateurs et vos tarifs</p>
             </div>
 
@@ -118,23 +118,23 @@ export default function ParametresPage() {
                 
                 <div className="w-64 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-1 h-fit">
                     <button id="btn-tab-societe" onClick={() => setActiveTab('societe')}
-                        className={`w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition border-l-3 border-transparent ${activeTab === 'societe' ? 'tab-active' : 'text-gray-600 hover:bg-gray-50'}`}>
+                        className={`w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition border-l-3 border-transparent ${activeTab === &apos;societe&apos; ? &apos;tab-active&apos; : &apos;text-gray-600 hover:bg-gray-50'}`}>
                         <i className="fa-solid fa-building mr-2 w-4"></i> Informations Société
                     </button>
                     <button id="btn-tab-users" onClick={() => setActiveTab('users')}
-                        className={`w-full text-left px-4 py-3 rounded-lg text-sm transition ${activeTab === 'users' ? 'tab-active' : 'text-gray-600 hover:bg-gray-50'}`}>
+                        className={`w-full text-left px-4 py-3 rounded-lg text-sm transition ${activeTab === &apos;users&apos; ? &apos;tab-active&apos; : &apos;text-gray-600 hover:bg-gray-50'}`}>
                         <i className="fa-solid fa-users-gear mr-2 w-4"></i> Utilisateurs & Rôles
                     </button>
                     <button id="btn-tab-tarifs" onClick={() => setActiveTab('tarifs')}
-                        className={`w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition border-l-3 border-transparent ${activeTab === 'tarifs' ? 'tab-active' : 'text-gray-600 hover:bg-gray-50'}`}>
+                        className={`w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition border-l-3 border-transparent ${activeTab === &apos;tarifs&apos; ? &apos;tab-active&apos; : &apos;text-gray-600 hover:bg-gray-50'}`}>
                         <i className="fa-solid fa-tags mr-2 w-4"></i> Tarification & Packs
                     </button>
                     <button id="btn-tab-pdf" onClick={() => setActiveTab('pdf')}
-                        className={`w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition border-l-3 border-transparent ${activeTab === 'pdf' ? 'tab-active' : 'text-gray-600 hover:bg-gray-50'}`}>
+                        className={`w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition border-l-3 border-transparent ${activeTab === &apos;pdf&apos; ? &apos;tab-active&apos; : &apos;text-gray-600 hover:bg-gray-50'}`}>
                         <i className="fa-solid fa-file-invoice mr-2 w-4"></i> Modèles PDF
                     </button>
                     <button id="btn-tab-notifications" onClick={() => setActiveTab('notifications')}
-                        className={`w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition border-l-3 border-transparent ${activeTab === 'notifications' ? 'tab-active' : 'text-gray-600 hover:bg-gray-50'}`}>
+                        className={`w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition border-l-3 border-transparent ${activeTab === &apos;notifications&apos; ? &apos;tab-active&apos; : &apos;text-gray-600 hover:bg-gray-50'}`}>
                         <i className="fa-solid fa-bell mr-2 w-4"></i> Notifications
                     </button>
                 </div>
@@ -143,7 +143,7 @@ export default function ParametresPage() {
                 <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-y-auto relative">
 
                     
-                    <div id="tab-societe" className={`p-6 md:p-8  ${activeTab === 'societe' ? 'block' : 'hidden'}`}>
+                    <div id="tab-societe" className={`p-6 md:p-8  ${activeTab === &apos;societe&apos; ? &apos;block&apos; : &apos;hidden'}`}>
                         <div className="mb-6">
                             <h3 className="text-lg font-bold text-gray-800">Informations de la Société</h3>
                             <p className="text-sm text-gray-500">Ces informations apparaîtront sur vos devis et factures.
@@ -231,7 +231,7 @@ RIB: CI059 01001 12345678901 23`} />
                     </div>
 
                     
-                    <div id="tab-pdf" className={`p-6 md:p-8  ${activeTab === 'pdf' ? 'block' : 'hidden'}`}>
+                    <div id="tab-pdf" className={`p-6 md:p-8  ${activeTab === &apos;pdf&apos; ? &apos;block&apos; : &apos;hidden'}`}>
                         <div className="mb-6">
                             <h3 className="text-lg font-bold text-gray-800">Personnalisation des Documents PDF</h3>
                             <p className="text-sm text-gray-500">Gérez le design visuel de vos devis et factures.</p>
@@ -334,7 +334,7 @@ Validité du devis : 15 jours.`} />
                     </div>
 
                     
-                    <div id="tab-users" className={`p-6 md:p-8  ${activeTab === 'users' ? 'block' : 'hidden'}`}>
+                    <div id="tab-users" className={`p-6 md:p-8  ${activeTab === &apos;users&apos; ? &apos;block&apos; : &apos;hidden'}`}>
                         <div className="flex justify-between items-center mb-6">
                             <div>
                                 <h3 className="text-lg font-bold text-gray-800">Utilisateurs & Rôles</h3>
@@ -419,7 +419,7 @@ Validité du devis : 15 jours.`} />
                     </div>
 
                     
-                    <div id="tab-tarifs" className={`p-6 md:p-8  ${activeTab === 'tarifs' ? 'block' : 'hidden'}`}>
+                    <div id="tab-tarifs" className={`p-6 md:p-8  ${activeTab === &apos;tarifs&apos; ? &apos;block&apos; : &apos;hidden'}`}>
                         <div className="mb-6">
                             <h3 className="text-lg font-bold text-gray-800">Catalogue des Tarifs (Aperçu)</h3>
                             <p className="text-sm text-gray-500">Modifier les prix de base utilisés dans le générateur de
@@ -496,7 +496,7 @@ Validité du devis : 15 jours.`} />
     </main>
 
     
-    <div id="newUserModal" className={`fixed inset-0 z-50 items-center justify-center p-4 ${isNewUserModalOpen ? 'flex' : 'hidden'}`}>
+    <div id="newUserModal" className={`fixed inset-0 z-50 items-center justify-center p-4 ${isNewUserModalOpen ? &apos;flex&apos; : &apos;hidden'}`}>
         <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity"
             onClick={() => setIsNewUserModalOpen(!isNewUserModalOpen)}></div>
         <div
@@ -530,7 +530,7 @@ Validité du devis : 15 jours.`} />
                 <div className="flex items-center mt-2">
                     <input type="checkbox" id="sendInvite" className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
                         defaultChecked />
-                    <label htmlFor="sendInvite" className="ml-2 text-sm text-gray-700">Envoyer un email d'invitation avec mot de
+                    <label htmlFor="sendInvite" className="ml-2 text-sm text-gray-700">Envoyer un email d&apos;invitation avec mot de
                         passe temporaire</label>
                 </div>
             </div>
