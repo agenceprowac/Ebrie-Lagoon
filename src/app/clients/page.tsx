@@ -1,0 +1,415 @@
+
+"use client";
+import Link from 'next/link';
+import { useState, useEffect } from 'react';
+
+export default function ClientsPage() {
+    const [activeTab, setActiveTab] = useState('all');
+    const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+
+
+    // Set default tab on mount
+    useEffect(() => {
+        // Just setting a default if needed
+        if (activeTab === 'all') {
+            setActiveTab('users'); // Default for parametres
+        }
+    }, []);
+
+    return (
+        <div className="flex h-screen overflow-hidden text-gray-800 bg-slate-50 font-sans">
+            
+
+    
+    <aside className="w-64 bg-white shadow-xl flex flex-col hidden md:flex z-30 relative shrink-0">
+        <div className="p-6 flex items-center justify-center border-b border-gray-100">
+            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg mr-3">
+                <i className="fa-solid fa-water"></i>
+            </div>
+            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500">
+                Ebrié Lagoon
+            </h1>
+        </div>
+        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+            <div className="px-2 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Principal</div>
+            <a href="/" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i className="fa-solid fa-chart-pie w-6"></i> Tableau de bord
+            </a>
+            <a href="/reservations" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i className="fa-solid fa-calendar-check w-6"></i> Réservations
+            </a>
+            <a href="/finances" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i className="fa-solid fa-file-invoice-dollar w-6"></i> Finances & Devis
+            </a>
+            <a href="/flotte" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i className="fa-solid fa-ship w-6"></i> Flotte & Opérations
+            </a>
+            <a href="/incidents" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i className="fa-solid fa-triangle-exclamation w-6"></i> Incidents
+            </a>
+            <a href="/partenaires" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i className="fa-solid fa-handshake w-6"></i> Partenaires
+            </a>
+            
+            <div className="px-2 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Administration</div>
+            <a href="/clients" className="sidebar-item active flex items-center px-4 py-3 text-sm font-medium">
+                <i className="fa-solid fa-users w-6"></i> Clients
+            </a>
+            <a href="/parametres" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
+                <i className="fa-solid fa-gear w-6"></i> Paramètres
+            </a>
+        </nav>
+        <div className="p-4 border-t border-gray-100">
+            <button className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:text-red-600 transition">
+                <i className="fa-solid fa-sign-out-alt w-6"></i> Déconnexion
+            </button>
+        </div>
+    </aside>
+
+    
+    <main className="flex-1 flex flex-col h-screen overflow-y-auto bg-slate-50 relative">
+        
+        <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 sticky top-0 z-20">
+            <div className="flex items-center justify-between px-6 py-4">
+                <div className="flex items-center bg-gray-100 rounded-full px-4 py-2 w-96 focus-within:ring-2 focus-within:ring-blue-400 transition">
+                    <i className="fa-solid fa-search text-gray-400"></i>
+                    <input type="text" placeholder="Rechercher un client (Nom, Téléphone)..." className="bg-transparent border-none outline-none ml-2 w-full text-sm" />
+                </div>
+                <div className="flex items-center space-x-4">
+                    <button className="relative p-2 text-gray-400 hover:text-gray-600 transition">
+                        <i className="fa-solid fa-bell text-xl"></i>
+                        <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                    <div className="flex items-center space-x-3 border-l pl-4 border-gray-200 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
+                        <img src="https://ui-avatars.com/api/?name=Lionel+Vithiano&background=0D8ABC&color=fff" alt="User" className="w-9 h-9 rounded-full shadow-sm" />
+                        <div className="hidden md:block text-sm">
+                            <p className="font-semibold text-gray-700">M. Lionel Vithiano</p>
+                            <p className="text-xs text-gray-500">Administrateur</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        
+        <div className="p-6 lg:p-8 space-y-6">
+            
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-800">Répertoire Clients</h2>
+                    <p className="text-sm text-gray-500">Gérez vos contacts et consultez leur historique</p>
+                </div>
+                <button onClick={() => setIsNewClientModalOpen(!isNewClientModalOpen)} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl shadow-md transition transform hover:-translate-y-0.5 text-sm font-medium flex items-center">
+                    <i className="fa-solid fa-user-plus mr-2"></i> Ajouter un Client
+                </button>
+            </div>
+
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-gray-500 mb-1">Total Clients</p>
+                        <h3 className="text-2xl font-bold text-gray-800">142</h3>
+                    </div>
+                    <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-xl">
+                        <i className="fa-solid fa-users"></i>
+                    </div>
+                </div>
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-gray-500 mb-1">Nouveaux ce mois</p>
+                        <h3 className="text-2xl font-bold text-green-600">+12</h3>
+                    </div>
+                    <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600 text-xl">
+                        <i className="fa-solid fa-arrow-trend-up"></i>
+                    </div>
+                </div>
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-gray-500 mb-1">Clients VIP (Corporate)</p>
+                        <h3 className="text-2xl font-bold text-purple-600">8</h3>
+                    </div>
+                    <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 text-xl">
+                        <i className="fa-solid fa-crown"></i>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <h3 className="font-bold text-gray-700">Liste des Contacts</h3>
+                    <div className="flex space-x-2">
+                        <button className="px-3 py-1.5 text-sm bg-white border border-gray-200 rounded text-gray-600 hover:bg-gray-50"><i className="fa-solid fa-download mr-1"></i> Exporter</button>
+                    </div>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse whitespace-nowrap">
+                        <thead>
+                            <tr className="bg-white text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
+                                <th className="px-6 py-4 font-medium">Client</th>
+                                <th className="px-6 py-4 font-medium">Contact</th>
+                                <th className="px-6 py-4 font-medium text-center">Catégorie</th>
+                                <th className="px-6 py-4 font-medium text-center">Réservations</th>
+                                <th className="px-6 py-4 font-medium text-right">CA Total</th>
+                                <th className="px-6 py-4 font-medium text-center">Dernière visite</th>
+                                <th className="px-6 py-4 font-medium text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="text-sm divide-y divide-gray-50">
+                            
+                            <tr className="hover:bg-gray-50 transition group">
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 text-white flex items-center justify-center font-bold mr-3 shadow-sm">
+                                            KA
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-gray-900">Koffi Armand</div>
+                                            <div className="text-xs text-gray-500">Ajouté le 12 Jan 2026</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className="text-gray-800"><i className="fa-solid fa-phone text-gray-400 w-4"></i> 07 07 12 34 56</div>
+                                    <div className="text-gray-500 text-xs"><i className="fa-solid fa-envelope text-gray-400 w-4"></i> armand.k@email.ci</div>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium border border-gray-200">Particulier</span>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-50 text-blue-600 font-bold">2</span>
+                                </td>
+                                <td className="px-6 py-4 text-right font-medium text-gray-800">
+                                    1 200 000 FCFA
+                                </td>
+                                <td className="px-6 py-4 text-center text-gray-500">
+                                    10 Juin 2026
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <button onClick={() => setIsHistoryModalOpen(!isHistoryModalOpen)} className="px-3 py-1 bg-white border border-gray-200 shadow-sm text-blue-600 rounded hover:bg-blue-50 transition text-xs font-medium">Voir fiche</button>
+                                </td>
+                            </tr>
+                            
+                            
+                            <tr className="hover:bg-gray-50 transition group">
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 to-purple-600 text-white flex items-center justify-center font-bold mr-3 shadow-sm">
+                                            ET
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-gray-900">Entreprise Tiemoko</div>
+                                            <div className="text-xs text-purple-600 font-medium">B2B Corporate</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className="text-gray-800"><i className="fa-solid fa-phone text-gray-400 w-4"></i> 27 22 00 11 22</div>
+                                    <div className="text-gray-500 text-xs"><i className="fa-solid fa-envelope text-gray-400 w-4"></i> contact@tiemoko.ci</div>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium border border-purple-200">Entreprise VIP</span>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-50 text-blue-600 font-bold">5</span>
+                                </td>
+                                <td className="px-6 py-4 text-right font-bold text-gray-800">
+                                    4 500 000 FCFA
+                                </td>
+                                <td className="px-6 py-4 text-center text-gray-500">
+                                    02 Mai 2026
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <button onClick={() => setIsHistoryModalOpen(!isHistoryModalOpen)} className="px-3 py-1 bg-white border border-gray-200 shadow-sm text-blue-600 rounded hover:bg-blue-50 transition text-xs font-medium">Voir fiche</button>
+                                </td>
+                            </tr>
+
+                            
+                            <tr className="hover:bg-gray-50 transition group">
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-teal-400 to-teal-600 text-white flex items-center justify-center font-bold mr-3 shadow-sm">
+                                            SF
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-gray-900">Sylla Fatou</div>
+                                            <div className="text-xs text-gray-500">Ajouté le 08 Juin 2026</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className="text-gray-800"><i className="fa-solid fa-phone text-gray-400 w-4"></i> 01 02 03 04 05</div>
+                                    <div className="text-gray-500 text-xs"><i className="fa-solid fa-envelope text-gray-400 w-4"></i> fatou.s@email.ci</div>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium border border-gray-200">Particulier</span>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-50 text-blue-600 font-bold">1</span>
+                                </td>
+                                <td className="px-6 py-4 text-right font-medium text-gray-800">
+                                    600 000 FCFA
+                                </td>
+                                <td className="px-6 py-4 text-center text-gray-500">
+                                    -
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <button onClick={() => setIsHistoryModalOpen(!isHistoryModalOpen)} className="px-3 py-1 bg-white border border-gray-200 shadow-sm text-blue-600 rounded hover:bg-blue-50 transition text-xs font-medium">Voir fiche</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div className="p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Affichage de 1 à 3 sur 142 clients</span>
+                    <div className="flex space-x-1">
+                        <button className="px-3 py-1 border border-gray-200 rounded text-gray-500 bg-white hover:bg-gray-50 disabled:opacity-50" disabled>Précédent</button>
+                        <button className="px-3 py-1 border border-blue-500 rounded text-white bg-blue-600">1</button>
+                        <button className="px-3 py-1 border border-gray-200 rounded text-gray-700 bg-white hover:bg-gray-50">2</button>
+                        <button className="px-3 py-1 border border-gray-200 rounded text-gray-700 bg-white hover:bg-gray-50">3</button>
+                        <button className="px-3 py-1 border border-gray-200 rounded text-gray-700 bg-white hover:bg-gray-50">Suivant</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    
+    <div id="newClientModal" className={`fixed inset-0 z-50 items-center justify-center p-4 ${isNewClientModalOpen ? 'flex' : 'hidden'}`}>
+        <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" onClick={() => setIsNewClientModalOpen(!isNewClientModalOpen)}></div>
+        <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl flex flex-col transform transition-all scale-100 opacity-100 duration-300 ease-in-out">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-gray-800">Ajouter un Client</h3>
+                <button onClick={() => setIsNewClientModalOpen(!isNewClientModalOpen)} className="text-gray-400 hover:text-red-500 transition text-xl"><i className="fa-solid fa-times"></i></button>
+            </div>
+            <div className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Nom Complet / Raison Sociale</label>
+                        <input type="text" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Téléphone Principal</label>
+                        <input type="text" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Téléphone Secondaire</label>
+                        <input type="text" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                    <div className="col-span-2">
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
+                        <input type="email" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                    <div className="col-span-2">
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Catégorie</label>
+                        <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="particulier">Particulier</option>
+                            <option value="entreprise">Entreprise / Corporate</option>
+                            <option value="vip">VIP</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3 rounded-b-2xl">
+                <button onClick={() => setIsNewClientModalOpen(!isNewClientModalOpen)} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Annuler</button>
+                <button className="px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-md">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <div id="historyModal" className={`fixed inset-0 z-50 items-center justify-center p-4 ${isHistoryModalOpen ? 'flex' : 'hidden'}`}>
+        <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" onClick={() => setIsHistoryModalOpen(!isHistoryModalOpen)}></div>
+        <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl flex flex-col transform transition-all scale-100 opacity-100 duration-300 ease-in-out max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                <div className="flex items-center">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 text-white flex items-center justify-center font-bold text-lg mr-4 shadow-sm">KA</div>
+                    <div>
+                        <h3 className="text-xl font-bold text-gray-800">Koffi Armand</h3>
+                        <p className="text-sm text-gray-500">Particulier • 07 07 12 34 56</p>
+                    </div>
+                </div>
+                <button onClick={() => setIsHistoryModalOpen(!isHistoryModalOpen)} className="text-gray-400 hover:text-red-500 transition text-2xl"><i className="fa-solid fa-times"></i></button>
+            </div>
+            <div className="p-6 overflow-y-auto bg-white flex-1 space-y-6">
+                
+                
+                <div className="flex bg-blue-50 rounded-xl p-4 border border-blue-100">
+                    <div className="flex-1 text-center border-r border-blue-200">
+                        <p className="text-xs text-blue-600 font-semibold uppercase tracking-wider mb-1">Total Réservations</p>
+                        <p className="text-2xl font-bold text-gray-800">2</p>
+                    </div>
+                    <div className="flex-1 text-center border-r border-blue-200">
+                        <p className="text-xs text-blue-600 font-semibold uppercase tracking-wider mb-1">CA Généré</p>
+                        <p className="text-2xl font-bold text-gray-800">1 200 000</p>
+                    </div>
+                    <div className="flex-1 text-center">
+                        <p className="text-xs text-blue-600 font-semibold uppercase tracking-wider mb-1">Dernière activité</p>
+                        <p className="text-xl font-bold text-gray-800 mt-1">10 Juin</p>
+                    </div>
+                </div>
+
+                
+                <div>
+                    <h4 className="font-bold text-gray-800 mb-4 flex items-center"><i className="fa-solid fa-clock-rotate-left mr-2 text-gray-400"></i> Historique des Prestations</h4>
+                    <div className="space-y-4">
+                        
+                        <div className="border border-gray-100 rounded-lg p-4 hover:shadow-sm transition bg-gray-50/50">
+                            <div className="flex justify-between items-start mb-2">
+                                <div>
+                                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-bold mr-2">RES-2026-068</span>
+                                    <span className="font-bold text-gray-800">Demande en mariage Premium</span>
+                                </div>
+                                <span className="text-sm font-bold text-gray-800">800 000 FCFA</span>
+                            </div>
+                            <div className="flex justify-between items-end">
+                                <div className="text-sm text-gray-500">
+                                    <p><i className="fa-regular fa-calendar mr-1"></i> 10 Juin 2026, 14:00 (3h)</p>
+                                    <p><i className="fa-solid fa-ship mr-1"></i> Lagune Express</p>
+                                </div>
+                                <div className="space-x-2">
+                                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Réalisée</span>
+                                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold"><i className="fa-solid fa-check mr-1"></i>Facture Soldée</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div className="border border-gray-100 rounded-lg p-4 hover:shadow-sm transition">
+                            <div className="flex justify-between items-start mb-2">
+                                <div>
+                                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-bold mr-2">RES-2026-012</span>
+                                    <span className="font-bold text-gray-800">Balade Lagune Simple</span>
+                                </div>
+                                <span className="text-sm font-bold text-gray-800">400 000 FCFA</span>
+                            </div>
+                            <div className="flex justify-between items-end">
+                                <div className="text-sm text-gray-500">
+                                    <p><i className="fa-regular fa-calendar mr-1"></i> 14 Fév 2026, 17:00 (2h)</p>
+                                    <p><i className="fa-solid fa-ship mr-1"></i> Étoile d'Ébrié</p>
+                                </div>
+                                <div className="space-x-2">
+                                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Réalisée</span>
+                                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold"><i className="fa-solid fa-check mr-1"></i>Facture Soldée</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-between">
+                <button className="text-blue-600 hover:text-blue-800 text-sm font-medium"><i className="fa-solid fa-pen mr-1"></i> Éditer profil</button>
+                <button onClick={() => setIsHistoryModalOpen(!isHistoryModalOpen)} className="px-5 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    
+
+        </div>
+    );
+}
