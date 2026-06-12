@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
 
 export default function Dashboard() {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const revChartRef = useRef<HTMLCanvasElement>(null);
     const canalChartRef = useRef<HTMLCanvasElement>(null);
 
@@ -25,7 +26,7 @@ export default function Dashboard() {
                         labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
                         datasets: [{
                             label: 'Revenus (FCFA)',
-                            data: [1200000, 1900000, 1500000, 2200000, 2800000, 4520000],
+                            data: [0, 0, 0, 0, 0, 0],
                             borderColor: '#2563eb',
                             backgroundColor: gradient,
                             borderWidth: 3,
@@ -58,7 +59,7 @@ export default function Dashboard() {
                     data: {
                         labels: ['WhatsApp', 'Site Web', 'Téléphone', 'Partenaires'],
                         datasets: [{
-                            data: [45, 25, 20, 10],
+                            data: [0, 0, 0, 0],
                             backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6'],
                             borderWidth: 0,
                             hoverOffset: 4
@@ -85,7 +86,14 @@ export default function Dashboard() {
     return (
         <div className="flex h-screen overflow-hidden text-gray-800 bg-slate-50 font-sans">
             {/* Sidebar */}
-            <aside className="w-64 bg-white shadow-xl flex-col hidden md:flex z-30 relative shrink-0">
+            {/* Overlay mobile */}
+            {isSidebarOpen && (
+                <div className="fixed inset-0 bg-gray-900/50 z-40 md:hidden" onClick={() => setIsSidebarOpen(false)}></div>
+            )}
+            <aside className={"w-64 bg-white shadow-xl flex flex-col z-50 fixed inset-y-0 left-0 transform " + (isSidebarOpen ? "translate-x-0" : "-translate-x-full") + " md:relative md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0"}>
+                <button onClick={() => setIsSidebarOpen(false)} className="absolute right-4 top-4 md:hidden text-gray-400 hover:text-gray-600 z-50">
+                    <i className="fa-solid fa-times text-xl"></i>
+                </button>
                 <div className="p-6 flex items-center justify-center border-b border-gray-100">
                     <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg mr-3">
                         <i className="fa-solid fa-water"></i>
@@ -135,10 +143,15 @@ export default function Dashboard() {
                 {/* Header */}
                 <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 sticky top-0 z-20">
                     <div className="flex items-center justify-between px-6 py-4">
-                        <div className="flex items-center bg-gray-100 rounded-full px-4 py-2 w-96 focus-within:ring-2 focus-within:ring-blue-400 transition">
+                        <div className="flex items-center space-x-3">
+                    <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 text-gray-600 hover:text-blue-600 transition">
+                        <i className="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <div className="hidden sm:flex items-center bg-gray-100 rounded-full px-4 py-2 w-72 md:w-96 focus-within:ring-2 focus-within:ring-blue-400 transition">
                             <i className="fa-solid fa-search text-gray-400"></i>
                             <input type="text" placeholder="Rechercher une réservation, un client..." className="bg-transparent border-none outline-none ml-2 w-full text-sm" />
                         </div>
+                </div>
                         <div className="flex items-center space-x-4">
                             <button className="relative p-2 text-gray-400 hover:text-gray-600 transition">
                                 <i className="fa-solid fa-bell text-xl"></i>
@@ -174,14 +187,14 @@ export default function Dashboard() {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-sm font-medium text-gray-500 mb-1">Chiffre d'Affaires</p>
-                                    <h3 className="text-2xl font-bold text-gray-800">4 520 000 FCFA</h3>
+                                    <h3 className="text-2xl font-bold text-gray-800">0 FCFA</h3>
                                 </div>
                                 <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
                                     <i className="fa-solid fa-arrow-trend-up"></i>
                                 </div>
                             </div>
                             <div className="mt-4 flex items-center text-sm">
-                                <span className="text-green-500 font-medium"><i className="fa-solid fa-caret-up mr-1"></i>+12.5%</span>
+                                <span className="text-gray-400 font-medium">-</span>
                                 <span className="text-gray-400 ml-2">vs mois précédent</span>
                             </div>
                         </div>
@@ -190,14 +203,14 @@ export default function Dashboard() {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-sm font-medium text-gray-500 mb-1">Réservations</p>
-                                    <h3 className="text-2xl font-bold text-gray-800">124</h3>
+                                    <h3 className="text-2xl font-bold text-gray-800">0</h3>
                                 </div>
                                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
                                     <i className="fa-solid fa-calendar-check"></i>
                                 </div>
                             </div>
                             <div className="mt-4 flex items-center text-sm">
-                                <span className="text-green-500 font-medium"><i className="fa-solid fa-caret-up mr-1"></i>+5</span>
+                                <span className="text-gray-400 font-medium">0</span>
                                 <span className="text-gray-400 ml-2">nouvelles aujourd'hui</span>
                             </div>
                         </div>
@@ -206,14 +219,14 @@ export default function Dashboard() {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-sm font-medium text-gray-500 mb-1">Contrôles Validés</p>
-                                    <h3 className="text-2xl font-bold text-gray-800">98%</h3>
+                                    <h3 className="text-2xl font-bold text-gray-800">0%</h3>
                                 </div>
                                 <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
                                     <i className="fa-solid fa-clipboard-check"></i>
                                 </div>
                             </div>
                             <div className="mt-4 flex items-center text-sm text-gray-500">
-                                <span>Sur 45 sorties bateaux</span>
+                                <span>Aucune sortie enregistrée</span>
                             </div>
                         </div>
                         {/* Card 4 */}
@@ -222,7 +235,7 @@ export default function Dashboard() {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-sm font-medium text-gray-500 mb-1">Incidents Actifs</p>
-                                    <h3 className="text-2xl font-bold text-red-600">2</h3>
+                                    <h3 className="text-2xl font-bold text-gray-800">0</h3>
                                 </div>
                                 <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
                                     <i className="fa-solid fa-triangle-exclamation"></i>
@@ -270,35 +283,10 @@ export default function Dashboard() {
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm divide-y divide-gray-100">
-                                    <tr className="hover:bg-gray-50 transition cursor-pointer">
-                                        <td className="px-6 py-4 font-medium text-gray-900">RES-2026-068</td>
-                                        <td className="px-6 py-4 flex items-center">
-                                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs mr-3">KA</div>
-                                            Koffi Armand
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                                            Aucune réservation récente.
                                         </td>
-                                        <td className="px-6 py-4 text-gray-600">12 Juin 2026, 14:00</td>
-                                        <td className="px-6 py-4 font-medium">150 000 FCFA</td>
-                                        <td className="px-6 py-4"><span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Confirmée</span></td>
-                                    </tr>
-                                    <tr className="hover:bg-gray-50 transition cursor-pointer">
-                                        <td className="px-6 py-4 font-medium text-gray-900">RES-2026-069</td>
-                                        <td className="px-6 py-4 flex items-center">
-                                            <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-xs mr-3">SF</div>
-                                            Sylla Fatou
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-600">15 Juin 2026, 09:30</td>
-                                        <td className="px-6 py-4 font-medium">85 000 FCFA</td>
-                                        <td className="px-6 py-4"><span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">En attente acompte</span></td>
-                                    </tr>
-                                    <tr className="hover:bg-gray-50 transition cursor-pointer">
-                                        <td className="px-6 py-4 font-medium text-gray-900">RES-2026-070</td>
-                                        <td className="px-6 py-4 flex items-center">
-                                            <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold text-xs mr-3">ET</div>
-                                            Entreprise Tiemoko
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-600">20 Juin 2026, 10:00</td>
-                                        <td className="px-6 py-4 font-medium">450 000 FCFA</td>
-                                        <td className="px-6 py-4"><span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Confirmée</span></td>
                                     </tr>
                                 </tbody>
                             </table>

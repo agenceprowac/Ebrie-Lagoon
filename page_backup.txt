@@ -2,224 +2,41 @@
 "use client";
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { supabase } from '@/utils/supabase';
 
-
+const initialReservations = [
+    { id: 'RES-2026-068', date: '10/06/2026', client: 'Koffi Armand', phone: '07 07 12 34 56', icon: 'whatsapp', iconColor: 'text-green-500', email: '', prestDate: '12 Juin 2026', prestDetails: '14:00 (3h) • 15 Pax', bateau: 'Catamaran "Lagune Express"', statut: 'Confirmée', statutColor: 'bg-green-100 text-green-700 border-green-200', total: '150 000', solde: 'Solde: 0', soldeColor: 'text-green-600' },
+    { id: 'RES-2026-069', date: '11/06/2026', client: 'Sylla Fatou', phone: '01 02 03 04 05', icon: 'phone', iconColor: 'text-gray-400', email: '', prestDate: '15 Juin 2026', prestDetails: '09:30 (Demi-journée) • 5 Pax', bateau: 'Speedboat "Rapide"', statut: 'Attente Acompte', statutColor: 'bg-yellow-100 text-yellow-700 border-yellow-200', total: '85 000', solde: 'Solde: 85 000', soldeColor: 'text-red-500' },
+    { id: 'RES-2026-070', date: '11/06/2026', client: 'Entreprise Tiemoko', phone: '', icon: 'envelope', iconColor: 'text-gray-400', email: 'contact@tiemoko.ci', prestDate: '20 Juin 2026', prestDetails: '10:00 (Journée) • 40 Pax', bateau: 'Yacht "VIP Ebrié"', statut: 'Brouillon', statutColor: 'bg-blue-100 text-blue-700 border-blue-200', total: '450 000', solde: 'Acompte: 150 000', soldeColor: 'text-orange-500' },
+    { id: 'RES-2026-071', date: '12/06/2026', client: 'Aka Serge', phone: '05 05 05 05 05', icon: 'phone', iconColor: 'text-gray-400', email: '', prestDate: '22 Juin 2026', prestDetails: '', bateau: 'Catamaran "Lagune Express"', statut: 'Confirmée', statutColor: 'bg-green-100 text-green-700 border-green-200', total: '200 000', solde: '', soldeColor: '' },
+    { id: 'RES-2026-072', date: '12/06/2026', client: 'Traoré Ismael', phone: '01 01 01 01 01', icon: 'phone', iconColor: 'text-gray-400', email: '', prestDate: '23 Juin 2026', prestDetails: '', bateau: 'Speedboat "Rapide"', statut: 'Terminée', statutColor: 'bg-gray-100 text-gray-700 border-gray-200', total: '120 000', solde: '', soldeColor: '' },
+    { id: 'RES-2026-073', date: '13/06/2026', client: 'Tourisme CI', phone: '', icon: 'envelope', iconColor: 'text-gray-400', email: 'contact@tourisme.ci', prestDate: '25 Juin 2026', prestDetails: '', bateau: 'Yacht "VIP Ebrié"', statut: 'Confirmée', statutColor: 'bg-green-100 text-green-700 border-green-200', total: '1 500 000', solde: '', soldeColor: '' },
+    { id: 'RES-2026-074', date: '13/06/2026', client: 'Bamba Ali', phone: '07 88 99 00 11', icon: 'phone', iconColor: 'text-gray-400', email: '', prestDate: '26 Juin 2026', prestDetails: '', bateau: 'Catamaran "Lagune Express"', statut: 'Annulée', statutColor: 'bg-red-100 text-red-700 border-red-200', total: '150 000', solde: '', soldeColor: '' },
+    { id: 'RES-2026-075', date: '14/06/2026', client: 'Diomandé Eric', phone: '05 66 77 88 99', icon: 'phone', iconColor: 'text-gray-400', email: '', prestDate: '28 Juin 2026', prestDetails: '', bateau: 'Speedboat "Rapide"', statut: 'Attente Acompte', statutColor: 'bg-yellow-100 text-yellow-700 border-yellow-200', total: '90 000', solde: '', soldeColor: '' },
+    { id: 'RES-2026-076', date: '14/06/2026', client: 'Kouamé Yves', phone: '01 23 45 67 89', icon: 'phone', iconColor: 'text-gray-400', email: '', prestDate: '29 Juin 2026', prestDetails: '', bateau: 'Catamaran "Lagune Express"', statut: 'Confirmée', statutColor: 'bg-green-100 text-green-700 border-green-200', total: '180 000', solde: '', soldeColor: '' },
+    { id: 'RES-2026-077', date: '15/06/2026', client: 'Soro Naminata', phone: '07 11 22 33 44', icon: 'phone', iconColor: 'text-gray-400', email: '', prestDate: '30 Juin 2026', prestDetails: '', bateau: 'Speedboat "Rapide"', statut: 'Brouillon', statutColor: 'bg-blue-100 text-blue-700 border-blue-200', total: '85 000', solde: '', soldeColor: '' },
+    { id: 'RES-2026-078', date: '16/06/2026', client: 'Yao Patrick', phone: '05 99 88 77 66', icon: 'phone', iconColor: 'text-gray-400', email: '', prestDate: '02 Juil 2026', prestDetails: '', bateau: 'Yacht "VIP Ebrié"', statut: 'Confirmée', statutColor: 'bg-green-100 text-green-700 border-green-200', total: '600 000', solde: '', soldeColor: '' }
+];
 
 export default function ReservationsPage() {
     const [activeTab, setActiveTab] = useState('all');
     const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-    const [isClientSearchModalOpen, setIsClientSearchModalOpen] = useState(false);
-    const [clientSearchTerm, setClientSearchTerm] = useState('');
-
-    // Supabase Data
-    const [reservations, setReservations] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
 
     // Nouveaux états UX
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedReservation, setSelectedReservation] = useState<any>(null);
-    const [notification, setNotification] = useState<{message: string, type: 'success' | 'info' | 'error'} | null>(null);
+    const [notification, setNotification] = useState<{message: string, type: 'success' | 'info'} | null>(null);
     
     // États Formulaire de création
-    const [clientsList, setClientsList] = useState<any[]>([]);
-    const [clientId, setClientId] = useState('');
     const [clientName, setClientName] = useState('');
-    const [clientPhone, setClientPhone] = useState('');
-    const [datePrestation, setDatePrestation] = useState('');
-    const [heureDebut, setHeureDebut] = useState('');
-    const [nbPersonnes, setNbPersonnes] = useState(1);
-    
-    // Nouveaux états Édition et Statut
-    const [editingReservationId, setEditingReservationId] = useState<string | null>(null);
-    const [reservationStatus, setReservationStatus] = useState('En attente');
-    
     const [packPrice, setPackPrice] = useState(0);
-    const [packType, setPackType] = useState('');
     const [optionsPrice, setOptionsPrice] = useState(0);
-    const [optionsList, setOptionsList] = useState<any>({});
     const [totalMontant, setTotalMontant] = useState(0);
 
     useEffect(() => {
         setTotalMontant(packPrice + optionsPrice);
     }, [packPrice, optionsPrice]);
-
-    useEffect(() => {
-        fetchReservations();
-        fetchClients();
-    }, []);
-
-    const fetchClients = async () => {
-        const { data } = await supabase.from('clients').select('id, nom, telephone');
-        if (data) setClientsList(data);
-    };
-
-    const fetchReservations = async () => {
-        try {
-            setIsLoading(true);
-            const { data, error } = await supabase
-                .from('reservations')
-                .select(`
-                    *,
-                    clients (nom, telephone, email)
-                `)
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            
-            // Format data for the table
-            const formatted = data.map(r => ({
-                id: r.numero_reference,
-                date: new Date(r.created_at).toLocaleDateString('fr-FR'),
-                client: r.clients?.nom || 'Inconnu',
-                phone: r.clients?.telephone || '',
-                icon: 'phone',
-                iconColor: 'text-gray-400',
-                email: r.clients?.email || '',
-                prestDate: new Date(r.date_prestation).toLocaleDateString('fr-FR'),
-                prestDetails: `${r.heure_debut?.substring(0,5) || ''} • ${r.nb_personnes} Pax`,
-                bateau: r.type_prestation,
-                statut: r.statut,
-                statutColor: r.statut === 'Confirmée' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-yellow-100 text-yellow-700 border-yellow-200',
-                total: r.montant_total?.toLocaleString() + ' FCFA',
-                solde: `Solde: ${(r.montant_total - (r.acompte || 0)).toLocaleString()}`,
-                soldeColor: 'text-red-500',
-                raw: r
-            }));
-            
-            setReservations(formatted);
-        } catch (error: any) {
-            console.error('Erreur fetch reservations:', error);
-            setNotification({ message: 'Erreur lors du chargement des données', type: 'error' });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleSaveReservation = async () => {
-        try {
-            let finalClientId = clientId;
-            // 1. Create Client if not exists
-            if (!finalClientId) {
-                const { data: clientData, error: clientError } = await supabase
-                    .from('clients')
-                    .insert([{ nom: clientName, telephone: clientPhone }])
-                    .select()
-                    .single();
-                    
-                if (clientError) throw clientError;
-                finalClientId = clientData.id;
-            }
-
-            // 2. Create Reservation
-            const refNumber = 'RES-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-            
-            let resError;
-            if (editingReservationId) {
-                const { error } = await supabase
-                    .from('reservations')
-                    .update({
-                        client_id: finalClientId,
-                        date_prestation: datePrestation,
-                        heure_debut: heureDebut,
-                        heure_fin: heureDebut,
-                        type_prestation: packType || 'Standard',
-                        nb_personnes: nbPersonnes,
-                        montant_total: totalMontant,
-                        statut: reservationStatus,
-                        options: optionsList
-                    })
-                    .eq('numero_reference', editingReservationId);
-                resError = error;
-            } else {
-                const { error } = await supabase
-                    .from('reservations')
-                    .insert([{
-                        numero_reference: refNumber,
-                        client_id: finalClientId,
-                        date_prestation: datePrestation,
-                        heure_debut: heureDebut,
-                        heure_fin: heureDebut,
-                        type_prestation: packType || 'Standard',
-                        nb_personnes: nbPersonnes,
-                        montant_total: totalMontant,
-                        statut: reservationStatus,
-                        options: optionsList
-                    }]);
-                resError = error;
-            }
-
-            if (resError) throw resError;
-
-            // Success
-            setNotification({ message: editingReservationId ? 'Réservation modifiée avec succès !' : 'Réservation enregistrée avec succès !', type: 'success' });
-            setIsReservationModalOpen(false);
-            
-            // Reset form
-            setClientName('');
-            setClientId('');
-            setClientPhone('');
-            setDatePrestation('');
-            setHeureDebut('');
-            setNbPersonnes(1);
-            setPackPrice(0);
-            
-            // Refresh data
-            fetchReservations();
-            
-            setTimeout(() => setNotification(null), 3000);
-        } catch (error: any) {
-            console.error('Erreur save reservation:', error);
-            setNotification({ message: 'Erreur lors de la sauvegarde: ' + error.message, type: 'error' });
-            setTimeout(() => setNotification(null), 5000);
-        }
-    };
-
-    const handleEditReservation = (res: any) => {
-        setEditingReservationId(res.id);
-        const r = res.raw;
-        
-        // Form states
-        setClientId(r.client_id || '');
-        setClientName(r.clients?.nom || '');
-        setClientPhone(r.clients?.telephone || '');
-        
-        setDatePrestation(r.date_prestation || '');
-        setHeureDebut(r.heure_debut ? r.heure_debut.substring(0, 5) : '');
-        setNbPersonnes(r.nb_personnes || 1);
-        
-        setPackType(r.type_prestation || '');
-        // Determine pack price from packType (basic logic based on what's in the select)
-        if (r.type_prestation?.includes('Mariage')) setPackPrice(800000);
-        else if (r.type_prestation?.includes('Anniversaire')) setPackPrice(600000);
-        else if (r.type_prestation?.includes('Corporate')) setPackPrice(1000000);
-        else setPackPrice(0);
-        
-        setReservationStatus(r.statut || 'En attente');
-        setOptionsList(r.options || {});
-        // Calculate options price by summing values of checked options
-        // For simplicity, let's just use totalMontant - packPrice
-        setOptionsPrice((r.montant_total || 0) - (r.type_prestation?.includes('Mariage') ? 800000 : r.type_prestation?.includes('Anniversaire') ? 600000 : r.type_prestation?.includes('Corporate') ? 1000000 : 0));
-        
-        setIsReservationModalOpen(true);
-    };
-
-    const handleNewReservationClick = () => {
-        setEditingReservationId(null);
-        setClientName('');
-        setClientId('');
-        setClientPhone('');
-        setDatePrestation('');
-        setHeureDebut('');
-        setNbPersonnes(1);
-        setPackPrice(0);
-        setReservationStatus('En attente');
-        setOptionsList({});
-        setOptionsPrice(0);
-        setIsReservationModalOpen(true);
-    };
 
     const handleActionPlaceholder = (actionName: string) => {
         setNotification({ message: `Fonctionnalité "${actionName}" en cours de développement.`, type: 'info' });
@@ -228,15 +45,10 @@ export default function ReservationsPage() {
 
     const handleOptionChange = (e: any) => {
         const price = parseInt(e.target.dataset.price) || 0;
-        const optionName = e.target.parentElement.innerText.trim();
         if (e.target.checked) {
             setOptionsPrice(prev => prev + price);
-            setOptionsList((prev:any) => ({...prev, [optionName]: true}));
         } else {
             setOptionsPrice(prev => prev - price);
-            const newList = {...optionsList};
-            delete newList[optionName];
-            setOptionsList(newList);
         }
     };
 
@@ -245,7 +57,7 @@ export default function ReservationsPage() {
         setIsDetailsModalOpen(true);
     };
 
-    const filteredReservations = reservations.filter(res => {
+    const filteredReservations = initialReservations.filter(res => {
         const term = (searchTerm || "").toLowerCase();
         return res.client.toLowerCase().includes(term) || 
                res.phone.includes(term) || 
@@ -355,7 +167,7 @@ export default function ReservationsPage() {
                     <h2 className="text-2xl font-bold text-gray-800">Gestion des Réservations</h2>
                     <p className="text-sm text-gray-500">Suivi complet des prestations clients</p>
                 </div>
-                <button onClick={handleNewReservationClick} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg shadow-md transition transform hover:-translate-y-0.5 text-sm font-medium flex items-center">
+                <button onClick={() => setIsReservationModalOpen(!isReservationModalOpen)} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg shadow-md transition transform hover:-translate-y-0.5 text-sm font-medium flex items-center">
                     <i className="fa-solid fa-plus mr-2"></i> Nouvelle Réservation
                 </button>
             </div>
@@ -416,14 +228,7 @@ export default function ReservationsPage() {
                             </tr>
                         </thead>
                         <tbody id="reservationsTableBody" className="text-sm divide-y divide-gray-100">
-                            {isLoading && (
-                                <tr>
-                                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                                        <i className="fa-solid fa-spinner fa-spin mr-2"></i> Chargement des réservations...
-                                    </td>
-                                </tr>
-                            )}
-                            {!isLoading && filteredReservations.map((res, idx) => (
+                            {filteredReservations.map((res, idx) => (
                             <tr key={idx} className="hover:bg-blue-50/50 transition">
                                 <td className="px-6 py-4">
                                     <span className="font-semibold text-gray-900">{res.id}</span>
@@ -450,12 +255,12 @@ export default function ReservationsPage() {
                                 </td>
                                 <td className="px-6 py-4 text-center space-x-2">
                                     <button onClick={() => handleOpenDetails(res)} className="text-blue-500 hover:text-blue-700 transition" title="Voir détails"><i className="fa-solid fa-eye"></i></button>
-                                    <button onClick={() => handleEditReservation(res)} className="text-gray-400 hover:text-blue-600 transition" title="Modifier"><i className="fa-solid fa-pen"></i></button>
+                                    <button onClick={() => handleActionPlaceholder("Modifier")} className="text-gray-400 hover:text-gray-600 transition" title="Modifier"><i className="fa-solid fa-pen"></i></button>
                                     <button onClick={() => handleActionPlaceholder("Paiement")} className="text-gray-400 hover:text-green-600 transition" title="Paiement"><i className="fa-solid fa-money-bill"></i></button>
                                 </td>
                             </tr>
                             ))}
-                            {!isLoading && filteredReservations.length === 0 && (
+                            {filteredReservations.length === 0 && (
                                 <tr>
                                     <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                                         Aucune réservation trouvée pour "{searchTerm}"
@@ -499,7 +304,7 @@ export default function ReservationsPage() {
         
         <div className="relative w-full max-w-3xl max-h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col transform transition-all scale-100 opacity-100 duration-300 ease-in-out" id="modalPanel">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
-                <h3 className="text-lg font-bold text-gray-800">{editingReservationId ? "Modifier la Réservation" : "Créer une Réservation"}</h3>
+                <h3 className="text-lg font-bold text-gray-800">Créer une Réservation</h3>
                 <button onClick={() => setIsReservationModalOpen(!isReservationModalOpen)} className="text-gray-400 hover:text-red-500 transition text-xl">
                     <i className="fa-solid fa-times"></i>
                 </button>
@@ -508,21 +313,15 @@ export default function ReservationsPage() {
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 
                 <div>
-                    <h4 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-4 border-b pb-2 flex justify-between items-center">
-                        <span><i className="fa-solid fa-user mr-2"></i>Informations Client</span>
-                        {clientId && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Client existant</span>}
-                    </h4>
+                    <h4 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-4 border-b pb-2"><i className="fa-solid fa-user mr-2"></i>Informations Client</h4>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-1">Nom du Client / Raison Sociale *</label>
-                            <div className="flex space-x-2">
-                                <input type="text" value={clientName} onDoubleClick={() => setIsClientSearchModalOpen(true)} required onChange={(e) => {setClientName(e.target.value); setClientId('');}} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Double-cliquez ou cherchez" />
-                                <button type="button" onClick={() => setIsClientSearchModalOpen(true)} className="bg-gray-100 border border-gray-300 text-gray-600 px-3 py-2 rounded-lg hover:bg-gray-200 transition"><i className="fa-solid fa-search"></i></button>
-                            </div>
+                            <input type="text" value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone / WhatsApp *</label>
-                            <input type="tel" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                            <input type="tel" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -544,39 +343,29 @@ export default function ReservationsPage() {
                 <div>
                     <h4 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-4 border-b pb-2"><i className="fa-solid fa-ship mr-2"></i>Détails Prestation</h4>
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Statut *</label>
-                            <select value={reservationStatus} onChange={(e) => setReservationStatus(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-800">
-                                <option value="En attente">En attente</option>
-                                <option value="Confirmée">Confirmée</option>
-                                <option value="Terminée">Terminée</option>
-                                <option value="Annulée">Annulée</option>
-                            </select>
-                        </div>
-                        <div className="col-span-1">
+                        <div className="col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-1">Pack Principal *</label>
-                            <select id="resPack" value={packType} onChange={(e) => {
+                            <select id="resPack" onChange={(e) => {
                                 const opt = e.target.options[e.target.selectedIndex];
                                 setPackPrice(parseInt(opt.getAttribute('data-price') || '0'));
-                                setPackType(opt.innerText);
                             }} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-blue-50">
                                 <option value="" data-price="0">-- Choisir un pack --</option>
-                                <option value="Demande en mariage Premium (800 000 FCFA)" data-price="800000">Demande en mariage Premium (800 000 FCFA)</option>
-                                <option value="Anniversaire Premium (600 000 FCFA)" data-price="600000">Anniversaire Premium (600 000 FCFA)</option>
-                                <option value="Corporate Premium (1 000 000 FCFA)" data-price="1000000">Corporate Premium (1 000 000 FCFA)</option>
+                                <option value="mariage" data-price="800000">Demande en mariage Premium (800 000 FCFA)</option>
+                                <option value="anniversaire" data-price="600000">Anniversaire Premium (600 000 FCFA)</option>
+                                <option value="corporate" data-price="1000000">Corporate Premium (1 000 000 FCFA)</option>
                             </select>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Date Prévue *</label>
-                            <input type="date" value={datePrestation} onChange={e => setDatePrestation(e.target.value)} required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                            <input type="date" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Heure de Départ *</label>
-                            <input type="time" value={heureDebut} onChange={e => setHeureDebut(e.target.value)} required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                            <input type="time" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Nb Participants *</label>
-                            <input type="number" min="1" value={Number.isNaN(nbPersonnes) ? '' : nbPersonnes} onChange={e => setNbPersonnes(parseInt(e.target.value))} required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                            <input type="number" min="1" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Bateau / Partenaire Alloué</label>
@@ -595,7 +384,7 @@ export default function ReservationsPage() {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Montant Calculé (FCFA) *</label>
-                            <input type="number" id="resMontant" value={totalMontant || 0} onChange={() => {}} step="1000" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-900 bg-gray-100 cursor-not-allowed" readOnly placeholder="0" />
+                            <input type="number" id="resMontant" step="1000" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-900 bg-gray-100 cursor-not-allowed" readOnly placeholder="0" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Acompte Payé (FCFA)</label>
@@ -628,7 +417,7 @@ export default function ReservationsPage() {
             
             <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3">
                 <button onClick={() => setIsReservationModalOpen(!isReservationModalOpen)} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Annuler</button>
-                <button disabled={packPrice === 0 || clientName.trim() === '' || clientPhone.trim() === '' || datePrestation === '' || heureDebut === ''} onClick={handleSaveReservation} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed">Enregistrer la réservation</button>
+                <button disabled={packPrice === 0 || clientName.trim() === ''} onClick={() => { setNotification({ message: 'Réservation enregistrée avec succès !', type: 'success' }); setIsReservationModalOpen(false); setClientName(''); setPackPrice(0); setTimeout(() => setNotification(null), 3000); }} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed">Enregistrer la réservation</button>
             </div>
         </div>
     </div>
@@ -702,53 +491,6 @@ export default function ReservationsPage() {
             </div>
         )}
 
-
-    {/* Client Search Modal */}
-    <div className={`fixed inset-0 z-[60] items-center justify-center p-4 ${isClientSearchModalOpen ? 'flex' : 'hidden'}`}>
-        <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onClick={() => setIsClientSearchModalOpen(false)}></div>
-        <div className="relative z-10 w-full max-w-lg bg-white rounded-2xl shadow-2xl flex flex-col max-h-[80vh]">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
-                <h3 className="text-lg font-bold text-gray-800">Rechercher un Client</h3>
-                <button onClick={() => setIsClientSearchModalOpen(false)} className="text-gray-400 hover:text-red-500 transition text-xl"><i className="fa-solid fa-times"></i></button>
-            </div>
-            <div className="p-4 border-b border-gray-100">
-                <div className="relative">
-                    <i className="fa-solid fa-search absolute left-3 top-3 text-gray-400"></i>
-                    <input 
-                        type="text" 
-                        value={clientSearchTerm}
-                        onChange={(e) => setClientSearchTerm(e.target.value)}
-                        placeholder="Rechercher par nom ou téléphone..." 
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                </div>
-            </div>
-            <div className="flex-1 overflow-y-auto p-2">
-                {clientsList.filter((c:any) => c.nom.toLowerCase().includes(clientSearchTerm.toLowerCase()) || c.telephone.includes(clientSearchTerm)).length === 0 ? (
-                    <div className="p-6 text-center text-gray-500">Aucun client trouvé.</div>
-                ) : (
-                    clientsList.filter((c:any) => c.nom.toLowerCase().includes(clientSearchTerm.toLowerCase()) || c.telephone.includes(clientSearchTerm)).map((client: any) => (
-                        <div 
-                            key={client.id} 
-                            onClick={() => {
-                                setClientId(client.id);
-                                setClientName(client.nom);
-                                setClientPhone(client.telephone);
-                                setIsClientSearchModalOpen(false);
-                            }}
-                            className="p-3 hover:bg-blue-50 border-b border-gray-50 cursor-pointer rounded transition flex justify-between items-center"
-                        >
-                            <div>
-                                <div className="font-bold text-gray-800">{client.nom}</div>
-                                <div className="text-sm text-gray-500"><i className="fa-solid fa-phone mr-1 text-gray-400"></i>{client.telephone}</div>
-                            </div>
-                            <button className="text-blue-600 text-sm font-medium bg-white border border-blue-200 px-3 py-1 rounded hover:bg-blue-100">Sélectionner</button>
-                        </div>
-                    ))
-                )}
-            </div>
-        </div>
-    </div>
         </div>
     );
 }

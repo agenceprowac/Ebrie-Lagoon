@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
 export default function ParametresPage() {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('all');
     const [isNewUserModalOpen, setIsNewUserModalOpen] = useState(false);
 
@@ -21,7 +22,14 @@ export default function ParametresPage() {
             
 
     
-    <aside className="w-64 bg-white shadow-xl flex flex-col hidden md:flex z-30 relative shrink-0">
+    {/* Overlay mobile */}
+            {isSidebarOpen && (
+                <div className="fixed inset-0 bg-gray-900/50 z-40 md:hidden" onClick={() => setIsSidebarOpen(false)}></div>
+            )}
+            <aside className={"w-64 bg-white shadow-xl flex flex-col z-50 fixed inset-y-0 left-0 transform " + (isSidebarOpen ? "translate-x-0" : "-translate-x-full") + " md:relative md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0"}>
+                <button onClick={() => setIsSidebarOpen(false)} className="absolute right-4 top-4 md:hidden text-gray-400 hover:text-gray-600 z-50">
+                    <i className="fa-solid fa-times text-xl"></i>
+                </button>
         <div className="p-6 flex items-center justify-center border-b border-gray-100">
             <div
                 className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg mr-3">
@@ -113,28 +121,28 @@ export default function ParametresPage() {
                 <p className="text-sm text-gray-500">Configurez votre environnement, vos utilisateurs et vos tarifs</p>
             </div>
 
-            <div className="flex flex-1 gap-6 overflow-hidden">
+            <div className="flex flex-col lg:flex-row flex-1 gap-6 overflow-hidden">
 
                 
-                <div className="w-64 bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-1 h-fit">
+                <div className="w-full lg:w-64 bg-white rounded-2xl shadow-sm border border-gray-100 p-2 lg:p-4 flex flex-row lg:flex-col space-x-2 lg:space-x-0 lg:space-y-1 h-fit overflow-x-auto shrink-0 hide-scrollbar">
                     <button id="btn-tab-societe" onClick={() => setActiveTab('societe')}
-                        className={`w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition border-l-3 border-transparent ${activeTab === 'societe' ? 'tab-active' : 'text-gray-600 hover:bg-gray-50'}`}>
+                        className={`whitespace-nowrap shrink-0 lg:w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition lg:border-l-3 lg:border-transparent ${activeTab === 'societe' ? 'tab-active' : 'text-gray-600 hover:bg-gray-50'}`}>
                         <i className="fa-solid fa-building mr-2 w-4"></i> Informations Société
                     </button>
                     <button id="btn-tab-users" onClick={() => setActiveTab('users')}
-                        className={`w-full text-left px-4 py-3 rounded-lg text-sm transition ${activeTab === 'users' ? 'tab-active' : 'text-gray-600 hover:bg-gray-50'}`}>
+                        className={`whitespace-nowrap shrink-0 lg:w-full text-left px-4 py-3 rounded-lg text-sm transition ${activeTab === 'users' ? 'tab-active' : 'text-gray-600 hover:bg-gray-50'}`}>
                         <i className="fa-solid fa-users-gear mr-2 w-4"></i> Utilisateurs & Rôles
                     </button>
                     <button id="btn-tab-tarifs" onClick={() => setActiveTab('tarifs')}
-                        className={`w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition border-l-3 border-transparent ${activeTab === 'tarifs' ? 'tab-active' : 'text-gray-600 hover:bg-gray-50'}`}>
+                        className={`whitespace-nowrap shrink-0 lg:w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition lg:border-l-3 lg:border-transparent ${activeTab === 'tarifs' ? 'tab-active' : 'text-gray-600 hover:bg-gray-50'}`}>
                         <i className="fa-solid fa-tags mr-2 w-4"></i> Tarification & Packs
                     </button>
                     <button id="btn-tab-pdf" onClick={() => setActiveTab('pdf')}
-                        className={`w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition border-l-3 border-transparent ${activeTab === 'pdf' ? 'tab-active' : 'text-gray-600 hover:bg-gray-50'}`}>
+                        className={`whitespace-nowrap shrink-0 lg:w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition lg:border-l-3 lg:border-transparent ${activeTab === 'pdf' ? 'tab-active' : 'text-gray-600 hover:bg-gray-50'}`}>
                         <i className="fa-solid fa-file-invoice mr-2 w-4"></i> Modèles PDF
                     </button>
                     <button id="btn-tab-notifications" onClick={() => setActiveTab('notifications')}
-                        className={`w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition border-l-3 border-transparent ${activeTab === 'notifications' ? 'tab-active' : 'text-gray-600 hover:bg-gray-50'}`}>
+                        className={`whitespace-nowrap shrink-0 lg:w-full text-left px-4 py-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition lg:border-l-3 lg:border-transparent ${activeTab === 'notifications' ? 'tab-active' : 'text-gray-600 hover:bg-gray-50'}`}>
                         <i className="fa-solid fa-bell mr-2 w-4"></i> Notifications
                     </button>
                 </div>

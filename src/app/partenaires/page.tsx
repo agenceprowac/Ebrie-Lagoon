@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
 export default function PartenairesPage() {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('all');
 
 
@@ -20,7 +21,14 @@ export default function PartenairesPage() {
             
 
     
-    <aside className="w-64 bg-white shadow-xl flex flex-col hidden md:flex z-30 relative shrink-0">
+    {/* Overlay mobile */}
+            {isSidebarOpen && (
+                <div className="fixed inset-0 bg-gray-900/50 z-40 md:hidden" onClick={() => setIsSidebarOpen(false)}></div>
+            )}
+            <aside className={"w-64 bg-white shadow-xl flex flex-col z-50 fixed inset-y-0 left-0 transform " + (isSidebarOpen ? "translate-x-0" : "-translate-x-full") + " md:relative md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0"}>
+                <button onClick={() => setIsSidebarOpen(false)} className="absolute right-4 top-4 md:hidden text-gray-400 hover:text-gray-600 z-50">
+                    <i className="fa-solid fa-times text-xl"></i>
+                </button>
         <div className="p-6 flex items-center justify-center border-b border-gray-100">
             <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg mr-3">
                 <i className="fa-solid fa-water"></i>
@@ -70,9 +78,14 @@ export default function PartenairesPage() {
         
         <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 sticky top-0 z-20">
             <div className="flex items-center justify-between px-6 py-4">
-                <div className="flex items-center bg-gray-100 rounded-full px-4 py-2 w-96 focus-within:ring-2 focus-within:ring-blue-400 transition">
+                <div className="flex items-center space-x-3">
+                    <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 text-gray-600 hover:text-blue-600 transition">
+                        <i className="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <div className="hidden sm:flex items-center bg-gray-100 rounded-full px-4 py-2 w-72 md:w-96 focus-within:ring-2 focus-within:ring-blue-400 transition">
                     <i className="fa-solid fa-search text-gray-400"></i>
                     <input type="text" placeholder="Rechercher un partenaire (Hôtel, Agence)..." className="bg-transparent border-none outline-none ml-2 w-full text-sm" />
+                </div>
                 </div>
                 <div className="flex items-center space-x-4">
                     <button className="relative p-2 text-gray-400 hover:text-gray-600 transition">
@@ -104,48 +117,9 @@ export default function PartenairesPage() {
 
             
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center">
-                            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 text-xl font-bold mr-3">
-                                <i className="fa-solid fa-hotel"></i>
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-gray-800 text-lg">Hôtel Ivoire</h3>
-                                <p className="text-xs text-purple-600 font-medium">Hôtellerie de luxe</p>
-                            </div>
-                        </div>
-                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Actif</span>
-                    </div>
-                    <div className="space-y-2 text-sm text-gray-600 mb-4">
-                        <p><i className="fa-solid fa-percent mr-2 w-4"></i> Commission: 15%</p>
-                        <p><i className="fa-solid fa-link mr-2 w-4"></i> Réservations: 12 ce mois</p>
-                    </div>
-                    <button className="w-full py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-sm font-medium transition border border-gray-200">Voir les détails</button>
+                <div className="col-span-full bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+                    <p className="text-gray-500">Aucun partenaire enregistré pour le moment.</p>
                 </div>
-
-                
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center">
-                            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 text-xl font-bold mr-3">
-                                <i className="fa-solid fa-utensils"></i>
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-gray-800 text-lg">Délices d'Abidjan</h3>
-                                <p className="text-xs text-orange-600 font-medium">Traiteur & Restauration</p>
-                            </div>
-                        </div>
-                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Actif</span>
-                    </div>
-                    <div className="space-y-2 text-sm text-gray-600 mb-4">
-                        <p><i className="fa-solid fa-handshake mr-2 w-4"></i> Type: Prestation externe</p>
-                        <p><i className="fa-solid fa-star mr-2 w-4"></i> Note: 4.8/5 (50 avis)</p>
-                    </div>
-                    <button className="w-full py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-sm font-medium transition border border-gray-200">Voir les détails</button>
-                </div>
-
             </div>
         </div>
     </main>
