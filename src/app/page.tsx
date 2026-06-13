@@ -21,7 +21,7 @@ export default function Dashboard() {
 
     useEffect(() => {
         const fetchDashboardData = async () => {
-            const { data: finances } = await supabase.from('finances').select('total_ttc');
+            const { data: finances } = await supabase.from('finances').select('total_ttc').eq('type_document', 'Facture');
             if (finances) {
                 const total = finances.reduce((acc, curr) => acc + (curr.total_ttc || 0), 0);
                 setChiffreAffaires(total);

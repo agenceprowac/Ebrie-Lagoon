@@ -143,6 +143,7 @@ function FinancesContent() {
     };
 
     const handleSaveDocument = async () => {
+        if (isSubmitting) return;
         if (!clientId) {
             setNotificationModal({ isOpen: true, type: 'warning', message: 'Veuillez sélectionner un client.' });
             return;
