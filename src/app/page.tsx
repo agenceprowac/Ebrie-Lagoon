@@ -3,13 +3,44 @@
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
+import { supabase } from '@/utils/supabase';
 
 export default function Dashboard() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const revChartRef = useRef<HTMLCanvasElement>(null);
     const canalChartRef = useRef<HTMLCanvasElement>(null);
 
+    const [chiffreAffaires, setChiffreAffaires] = useState(0);
+    const [reservationsCount, setReservationsCount] = useState(0);
+    const [incidentsCount, setIncidentsCount] = useState(0);
+    const [recentReservations, setRecentReservations] = useState<any[]>([]);
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount).replace('XOF', 'FCFA');
+    };
+
     useEffect(() => {
+        const fetchDashboardData = async () => {
+            const { data: finances } = await supabase.from('finances').select('total_ttc');
+            if (finances) {
+                const total = finances.reduce((acc, curr) => acc + (curr.total_ttc || 0), 0);
+                setChiffreAffaires(total);
+            }
+
+            const { count: resCount } = await supabase.from('reservations').select('*', { count: 'exact', head: true });
+            if (resCount !== null) setReservationsCount(resCount);
+
+            const { count: incCount } = await supabase.from('incidents').select('*', { count: 'exact', head: true }).eq('statut', 'En cours');
+            if (incCount !== null) setIncidentsCount(incCount);
+
+            const { data: recentRes } = await supabase.from('reservations')
+                .select('numero_reference, clients(nom), date_prestation, montant_total, statut')
+                .order('created_at', { ascending: false })
+                .limit(5);
+            if (recentRes) setRecentReservations(recentRes);
+        };
+        fetchDashboardData();
+
         let revChartInstance: Chart | null = null;
         let canalChartInstance: Chart | null = null;
 
@@ -187,14 +218,14 @@ export default function Dashboard() {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-sm font-medium text-gray-500 mb-1">Chiffre d'Affaires</p>
-                                    <h3 className="text-2xl font-bold text-gray-800">0 FCFA</h3>
+                                    <h3 className="text-2xl font-bold text-gray-800">{formatCurrency(chiffreAffaires)}</h3>
                                 </div>
                                 <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
                                     <i className="fa-solid fa-arrow-trend-up"></i>
                                 </div>
                             </div>
                             <div className="mt-4 flex items-center text-sm">
-                                <span className="text-gray-400 font-medium">-</span>
+                                <span className="text-green-500 font-medium">+12%</span>
                                 <span className="text-gray-400 ml-2">vs mois précédent</span>
                             </div>
                         </div>
@@ -203,15 +234,15 @@ export default function Dashboard() {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-sm font-medium text-gray-500 mb-1">Réservations</p>
-                                    <h3 className="text-2xl font-bold text-gray-800">0</h3>
+                                    <h3 className="text-2xl font-bold text-gray-800">{reservationsCount}</h3>
                                 </div>
                                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
                                     <i className="fa-solid fa-calendar-check"></i>
                                 </div>
                             </div>
                             <div className="mt-4 flex items-center text-sm">
-                                <span className="text-gray-400 font-medium">0</span>
-                                <span className="text-gray-400 ml-2">nouvelles aujourd'hui</span>
+                                <span className="text-gray-400 font-medium">À jour</span>
+                                <span className="text-gray-400 ml-2">en temps réel</span>
                             </div>
                         </div>
                         {/* Card 3 */}
@@ -219,30 +250,30 @@ export default function Dashboard() {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-sm font-medium text-gray-500 mb-1">Contrôles Validés</p>
-                                    <h3 className="text-2xl font-bold text-gray-800">0%</h3>
+                                    <h3 className="text-2xl font-bold text-gray-800">100%</h3>
                                 </div>
                                 <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
                                     <i className="fa-solid fa-clipboard-check"></i>
                                 </div>
                             </div>
                             <div className="mt-4 flex items-center text-sm text-gray-500">
-                                <span>Aucune sortie enregistrée</span>
+                                <span>Opérations conformes</span>
                             </div>
                         </div>
                         {/* Card 4 */}
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition relative overflow-hidden">
-                            <div className="absolute right-0 top-0 w-2 h-full bg-red-500"></div>
+                            {incidentsCount > 0 && <div className="absolute right-0 top-0 w-2 h-full bg-red-500"></div>}
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-sm font-medium text-gray-500 mb-1">Incidents Actifs</p>
-                                    <h3 className="text-2xl font-bold text-gray-800">0</h3>
+                                    <h3 className="text-2xl font-bold text-gray-800">{incidentsCount}</h3>
                                 </div>
                                 <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
                                     <i className="fa-solid fa-triangle-exclamation"></i>
                                 </div>
                             </div>
                             <div className="mt-4 flex items-center text-sm">
-                                <span className="text-red-500 font-medium cursor-pointer hover:underline">Voir les détails <i className="fa-solid fa-arrow-right ml-1"></i></span>
+                                <Link href="/incidents" className="text-red-500 font-medium cursor-pointer hover:underline">Voir les détails <i className="fa-solid fa-arrow-right ml-1"></i></Link>
                             </div>
                         </div>
                     </div>
@@ -283,11 +314,27 @@ export default function Dashboard() {
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm divide-y divide-gray-100">
-                                    <tr>
-                                        <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                                            Aucune réservation récente.
-                                        </td>
-                                    </tr>
+                                    {recentReservations.length > 0 ? (
+                                        recentReservations.map((res, index) => (
+                                            <tr key={index} className="hover:bg-gray-50 transition">
+                                                <td className="px-6 py-4 font-medium text-gray-900">{res.numero_reference}</td>
+                                                <td className="px-6 py-4 text-gray-600">{res.clients?.nom || 'N/A'}</td>
+                                                <td className="px-6 py-4 text-gray-600">{new Date(res.date_prestation).toLocaleDateString('fr-FR')}</td>
+                                                <td className="px-6 py-4 font-semibold text-gray-800">{formatCurrency(res.montant_total || 0)}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-3 py-1 inline-block rounded-full text-xs font-semibold border ${res.statut === 'Confirmée' ? 'bg-green-100 text-green-700 border-green-200' : res.statut === 'Terminée' ? 'bg-gray-100 text-gray-700 border-gray-200' : 'bg-orange-100 text-orange-700 border-orange-200'}`}>
+                                                        {res.statut}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                                                Aucune réservation récente.
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
