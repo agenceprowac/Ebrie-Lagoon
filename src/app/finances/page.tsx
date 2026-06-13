@@ -1,6 +1,6 @@
 "use client";
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { supabase } from '@/utils/supabase';
 
 type Finance = {
@@ -24,12 +24,15 @@ type Finance = {
     };
     reservations?: {
         numero_reference: string;
+        type_prestation?: string;
+        montant_total?: number;
     };
 };
 
 type Client = {
     id: string;
     nom: string;
+    telephone?: string;
 };
 
 type Reservation = {
@@ -45,7 +48,7 @@ type Reservation = {
 
 import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function FinancesPage() {
+function FinancesContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -130,7 +133,7 @@ export default function FinancesPage() {
         if (finData) setFinances(finData as Finance[]);
         if (finError) console.error(finError);
 
-        const { data: cliData } = await supabase.from('clients').select('id, nom');
+        const { data: cliData } = await supabase.from('clients').select('id, nom, telephone');
         if (cliData) setClients(cliData as Client[]);
 
         const { data: resData } = await supabase.from('reservations').select('id, numero_reference, client_id, type_prestation, montant_total, clients(nom)');
@@ -841,5 +844,13 @@ export default function FinancesPage() {
             </div>
 
         </div>
+    );
+}
+
+export default function FinancesPage() {
+    return (
+        <Suspense fallback={<div className="flex h-screen items-center justify-center bg-slate-50"><p className="text-gray-500 font-medium">Chargement des finances...</p></div>}>
+            <FinancesContent />
+        </Suspense>
     );
 }
