@@ -22,6 +22,8 @@ export default function ClientsPage() {
     const [email, setEmail] = useState('');
     const [categorie, setCategorie] = useState('particulier');
     const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+    const [editingClientId, setEditingClientId] = useState<string | null>(null);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
     const handleViewClient = async (client: any) => {
         setSelectedClient(client);
@@ -70,20 +72,25 @@ export default function ClientsPage() {
         }
 
         try {
-            const { error } = await supabase
-                .from('clients')
-                .insert([{ 
-                    nom, 
-                    telephone, 
-                    email
-                }]);
+            if (editingClientId) {
+                const { error } = await supabase
+                    .from('clients')
+                    .update({ nom, telephone, email })
+                    .eq('id', editingClientId);
+                if (error) throw error;
+                setNotification({ message: 'Client modifié avec succès !', type: 'success' });
+            } else {
+                const { error } = await supabase
+                    .from('clients')
+                    .insert([{ nom, telephone, email }]);
+                if (error) throw error;
+                setNotification({ message: 'Client ajouté avec succès !', type: 'success' });
+            }
 
-            if (error) throw error;
-
-            setNotification({ message: 'Client ajouté avec succès !', type: 'success' });
             setIsNewClientModalOpen(false);
             
             // Reset form
+            setEditingClientId(null);
             setNom('');
             setTelephone('');
             setTelephoneSecondaire('');
@@ -95,6 +102,31 @@ export default function ClientsPage() {
             setTimeout(() => setNotification(null), 3000);
         } catch (error: any) {
             console.error('Erreur save client:', error);
+            setNotification({ message: 'Erreur: ' + error.message, type: 'error' });
+            setTimeout(() => setNotification(null), 5000);
+        }
+    };
+
+    const handleEditClient = (client: any) => {
+        setEditingClientId(client.id);
+        setNom(client.nom);
+        setTelephone(client.telephone || '');
+        setTelephoneSecondaire(client.telephoneSecondaire || '');
+        setEmail(client.email || '');
+        setCategorie(client.categorie || 'particulier');
+        setIsNewClientModalOpen(true);
+        setIsHistoryModalOpen(false); // au cas où on l'ouvre depuis la fiche
+    };
+
+    const handleDeleteClient = async (id: string) => {
+        try {
+            const { error } = await supabase.from('clients').delete().eq('id', id);
+            if (error) throw error;
+            setNotification({ message: 'Client supprimé avec succès !', type: 'success' });
+            fetchClients();
+            setDeleteConfirmId(null);
+            setTimeout(() => setNotification(null), 3000);
+        } catch (error: any) {
             setNotification({ message: 'Erreur: ' + error.message, type: 'error' });
             setTimeout(() => setNotification(null), 5000);
         }
@@ -146,6 +178,7 @@ export default function ClientsPage() {
             <a href="/parametres" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
                 <i className="fa-solid fa-gear w-6"></i> Paramètres
             </a>
+
         </nav>
         <div className="p-4 border-t border-gray-100">
             <button className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:text-red-600 transition">
@@ -154,9 +187,7 @@ export default function ClientsPage() {
         </div>
     </aside>
 
-    
     <main className="flex-1 flex flex-col h-screen overflow-y-auto bg-slate-50 relative">
-        
         <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 sticky top-0 z-20">
             <div className="flex items-center justify-between px-6 py-4">
                 <div className="flex items-center space-x-3">
@@ -164,9 +195,9 @@ export default function ClientsPage() {
                         <i className="fa-solid fa-bars text-xl"></i>
                     </button>
                     <div className="hidden sm:flex items-center bg-gray-100 rounded-full px-4 py-2 w-72 md:w-96 focus-within:ring-2 focus-within:ring-blue-400 transition">
-                    <i className="fa-solid fa-search text-gray-400"></i>
-                    <input type="text" placeholder="Rechercher un client (Nom, Téléphone)..." className="bg-transparent border-none outline-none ml-2 w-full text-sm" />
-                </div>
+                        <i className="fa-solid fa-search text-gray-400"></i>
+                        <input type="text" placeholder="Rechercher un client (Nom, Téléphone)..." className="bg-transparent border-none outline-none ml-2 w-full text-sm" />
+                    </div>
                 </div>
                 <div className="flex items-center space-x-4">
                     <button className="relative p-2 text-gray-400 hover:text-gray-600 transition">
@@ -184,25 +215,30 @@ export default function ClientsPage() {
             </div>
         </header>
 
-        
         {notification && (
             <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg text-white ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
                 {notification.message}
             </div>
         )}
         <div className="p-6 lg:p-8 space-y-6">
-            
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800">Répertoire Clients</h2>
                     <p className="text-sm text-gray-500">Gérez vos contacts et consultez leur historique</p>
                 </div>
-                <button onClick={() => setIsNewClientModalOpen(!isNewClientModalOpen)} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl shadow-md transition transform hover:-translate-y-0.5 text-sm font-medium flex items-center">
+                <button onClick={() => {
+                    setEditingClientId(null);
+                    setNom('');
+                    setTelephone('');
+                    setTelephoneSecondaire('');
+                    setEmail('');
+                    setCategorie('particulier');
+                    setIsNewClientModalOpen(true);
+                }} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl shadow-md transition transform hover:-translate-y-0.5 text-sm font-medium flex items-center">
                     <i className="fa-solid fa-user-plus mr-2"></i> Ajouter un Client
                 </button>
             </div>
 
-            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
                     <div>
@@ -233,7 +269,6 @@ export default function ClientsPage() {
                 </div>
             </div>
 
-            
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <h3 className="font-bold text-gray-700">Liste des Contacts</h3>
@@ -292,7 +327,17 @@ export default function ClientsPage() {
                                             -
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <button onClick={() => handleViewClient(client)} className="px-3 py-1 bg-white border border-gray-200 shadow-sm text-blue-600 rounded hover:bg-blue-50 transition text-xs font-medium">Voir fiche</button>
+                                            <div className="flex items-center justify-center space-x-2">
+                                                <button onClick={() => handleViewClient(client)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Voir détails">
+                                                    <i className="fa-solid fa-eye"></i>
+                                                </button>
+                                                <button onClick={() => handleEditClient(client)} className="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition" title="Modifier">
+                                                    <i className="fa-solid fa-pen"></i>
+                                                </button>
+                                                <button onClick={() => setDeleteConfirmId(client.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Supprimer">
+                                                    <i className="fa-solid fa-trash"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -321,7 +366,7 @@ export default function ClientsPage() {
         <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" onClick={() => setIsNewClientModalOpen(!isNewClientModalOpen)}></div>
         <div className="relative z-10 w-full max-w-lg bg-white rounded-2xl shadow-2xl flex flex-col transform transition-all scale-100 opacity-100 duration-300 ease-in-out">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="text-lg font-bold text-gray-800">Ajouter un Client</h3>
+                <h3 className="text-lg font-bold text-gray-800">{editingClientId ? 'Modifier le Client' : 'Ajouter un Client'}</h3>
                 <button onClick={() => setIsNewClientModalOpen(!isNewClientModalOpen)} className="text-gray-400 hover:text-red-500 transition text-xl"><i className="fa-solid fa-times"></i></button>
             </div>
             <div className="p-6 space-y-4">
@@ -427,7 +472,7 @@ export default function ClientsPage() {
                         </div>
                     </div>
                     <div className="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-between">
-                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium"><i className="fa-solid fa-pen mr-1"></i> Éditer profil</button>
+                        <button onClick={() => handleEditClient(selectedClient)} className="text-blue-600 hover:text-blue-800 text-sm font-medium"><i className="fa-solid fa-pen mr-1"></i> Éditer profil</button>
                         <button onClick={() => setIsHistoryModalOpen(false)} className="px-5 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition">Fermer</button>
                     </div>
                 </>
@@ -435,7 +480,22 @@ export default function ClientsPage() {
         </div>
     </div>
 
-    
+    {/* Delete Confirmation Modal */}
+    {deleteConfirmId && (
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center animate-in zoom-in-95 duration-200">
+                <div className="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i className="fa-solid fa-triangle-exclamation text-3xl"></i>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">Êtes-vous sûr ?</h3>
+                <p className="text-gray-600 mb-8">La suppression d'un client est définitive et peut affecter l'historique des réservations. Continuer ?</p>
+                <div className="flex space-x-3">
+                    <button onClick={() => setDeleteConfirmId(null)} className="flex-1 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-xl transition">Annuler</button>
+                    <button onClick={() => handleDeleteClient(deleteConfirmId)} className="flex-1 py-3.5 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-semibold rounded-xl shadow-lg transition">Supprimer</button>
+                </div>
+            </div>
+        </div>
+    )}
 
         </div>
     );

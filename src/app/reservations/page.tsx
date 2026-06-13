@@ -261,6 +261,9 @@ export default function ReservationsPage() {
         }
     }, []);
 
+    const selectedPackPrice = selectedReservation?.raw?.type_prestation?.includes('Mariage') ? 800000 : selectedReservation?.raw?.type_prestation?.includes('Anniversaire') ? 600000 : selectedReservation?.raw?.type_prestation?.includes('Corporate') ? 1000000 : 0;
+    const selectedOptPrice = Math.max(0, (selectedReservation?.raw?.montant_total || 0) - selectedPackPrice);
+
     return (
         <div className="flex h-screen overflow-hidden text-gray-800 bg-slate-50 font-sans">
             
@@ -674,12 +677,12 @@ export default function ReservationsPage() {
             <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-between rounded-b-2xl">
                 <button onClick={() => setIsDetailsModalOpen(!isDetailsModalOpen)} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Fermer</button>
                 <div className="space-x-3">
-                    <a href="finances_prototype.html?action=new_doc&type=devis&client=Koffi+Armand&pack=mariage" id="btnDevis" className="px-5 py-2.5 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition shadow-sm inline-flex items-center">
+                    <Link href={`/finances?action=new_doc&type=Devis&client_id=${selectedReservation?.raw?.client_id || ''}&reservation_id=${selectedReservation?.raw?.id || ''}&pack_price=${selectedPackPrice}&opt_price=${selectedOptPrice}`} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition shadow-sm inline-flex items-center">
                         <i className="fa-solid fa-file-signature mr-2"></i> Générer Devis
-                    </a>
-                    <a href="finances_prototype.html?action=new_doc&type=facture&client=Koffi+Armand&pack=mariage" id="btnFacture" className="px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-md inline-flex items-center">
+                    </Link>
+                    <Link href={`/finances?action=new_doc&type=Facture&client_id=${selectedReservation?.raw?.client_id || ''}&reservation_id=${selectedReservation?.raw?.id || ''}&pack_price=${selectedPackPrice}&opt_price=${selectedOptPrice}`} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-md inline-flex items-center">
                         <i className="fa-solid fa-file-invoice-dollar mr-2"></i> Générer Facture
-                    </a>
+                    </Link>
                 </div>
             </div>
         </div>

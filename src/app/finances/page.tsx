@@ -7,7 +7,7 @@ type Finance = {
     id: string;
     numero_document: string;
     type_document: string;
-    date_emission: string;
+    date_creation: string;
     reservation_id?: string;
     client_id?: string;
     statut: string;
@@ -36,12 +36,18 @@ type Reservation = {
     id: string;
     numero_reference: string;
     client_id: string;
+    type_prestation?: string;
+    montant_total?: number;
     clients?: {
         nom: string;
-    }
+    };
 };
 
+import { useSearchParams, useRouter } from 'next/navigation';
+
 export default function FinancesPage() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('all');
     const [isGeneratorModalOpen, setIsGeneratorModalOpen] = useState(false);
@@ -52,6 +58,11 @@ export default function FinancesPage() {
     const [reservations, setReservations] = useState<Reservation[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [notificationModal, setNotificationModal] = useState<{isOpen: boolean, type: 'success' | 'error' | 'warning', message: string}>({isOpen: false, type: 'success', message: ''});
+    const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+    const [editingDocId, setEditingDocId] = useState<string | null>(null);
+    const [selectedDocDetails, setSelectedDocDetails] = useState<Finance | null>(null);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
     // Form
     const [docType, setDocType] = useState('Devis');
@@ -74,11 +85,47 @@ export default function FinancesPage() {
         setDateEmission(new Date().toISOString().split('T')[0]);
     }, []);
 
+    useEffect(() => {
+        const action = searchParams.get('action');
+        if (action === 'new_doc') {
+            const type = searchParams.get('type');
+            if (type === 'Devis' || type === 'Facture') setDocType(type);
+            const client = searchParams.get('client_id');
+            if (client) setClientId(client);
+            const resId = searchParams.get('reservation_id');
+            if (resId) setReservationId(resId);
+            const packP = searchParams.get('pack_price');
+            if (packP) setPackPrice(Number(packP));
+            const optP = searchParams.get('opt_price');
+            if (optP) setOptPrice(Number(optP));
+            setIsGeneratorModalOpen(true);
+            router.replace('/finances');
+        }
+    }, [searchParams, router]);
+
+    // Recalculer les prix si on choisit manuellement une réservation (ou après le fetch initial)
+    useEffect(() => {
+        if (reservationId && reservations.length > 0) {
+            const res = reservations.find(r => r.id === reservationId);
+            if (res) {
+                let pPrice = 0;
+                const tp = res.type_prestation || '';
+                if (tp.includes('Mariage')) pPrice = 800000;
+                else if (tp.includes('Anniversaire')) pPrice = 600000;
+                else if (tp.includes('Corporate')) pPrice = 1000000;
+                
+                const oPrice = Math.max(0, (res.montant_total || 0) - pPrice);
+                setPackPrice(pPrice);
+                setOptPrice(oPrice);
+            }
+        }
+    }, [reservationId, reservations]);
+
     const fetchData = async () => {
         setIsLoading(true);
         const { data: finData, error: finError } = await supabase
             .from('finances')
-            .select('*, clients(nom, telephone, email), reservations(numero_reference)')
+            .select('*, clients(nom, telephone, email), reservations(numero_reference, type_prestation, montant_total)')
             .order('created_at', { ascending: false });
         if (finData) setFinances(finData as Finance[]);
         if (finError) console.error(finError);
@@ -86,24 +133,26 @@ export default function FinancesPage() {
         const { data: cliData } = await supabase.from('clients').select('id, nom');
         if (cliData) setClients(cliData as Client[]);
 
-        const { data: resData } = await supabase.from('reservations').select('id, numero_reference, client_id, clients(nom)');
+        const { data: resData } = await supabase.from('reservations').select('id, numero_reference, client_id, type_prestation, montant_total, clients(nom)');
         if (resData) setReservations(resData as unknown as Reservation[]);
 
         setIsLoading(false);
     };
 
     const handleSaveDocument = async () => {
-        if (!clientId) return alert('Veuillez sélectionner un client.');
+        if (!clientId) {
+            setNotificationModal({ isOpen: true, type: 'warning', message: 'Veuillez sélectionner un client.' });
+            return;
+        }
+        if (!reservationId) {
+            setNotificationModal({ isOpen: true, type: 'warning', message: 'Veuillez sélectionner une réservation liée.' });
+            return;
+        }
         setIsSubmitting(true);
 
-        const randomNum = Math.floor(1000 + Math.random() * 9000);
-        const prefix = docType === 'Facture' ? 'FAC' : 'DEV';
-        const numDoc = `${prefix}-${randomNum}`;
-
-        const payload = {
-            numero_document: numDoc,
+        let payload: any = {
             type_document: docType,
-            date_emission: dateEmission,
+            date_creation: dateEmission,
             client_id: clientId,
             reservation_id: reservationId || null,
             statut: docType === 'Devis' ? 'En attente' : (acompte >= totalTTC ? 'Soldée' : (acompte > 0 ? 'Acompte payé' : 'En attente')),
@@ -114,15 +163,33 @@ export default function FinancesPage() {
             reste_a_payer: resteAPayer
         };
 
-        const { data, error } = await supabase.from('finances').insert([payload]).select('*, clients(nom, telephone, email), reservations(numero_reference)');
+        if (!editingDocId) {
+            const randomNum = Math.floor(1000 + Math.random() * 9000);
+            const prefix = docType === 'Facture' ? 'FAC' : 'DEV';
+            payload.numero_document = `${prefix}-${randomNum}`;
+        }
+
+        let result;
+        if (editingDocId) {
+            result = await supabase.from('finances').update(payload).eq('id', editingDocId).select('*, clients(nom, telephone, email), reservations(numero_reference)');
+        } else {
+            result = await supabase.from('finances').insert([payload]).select('*, clients(nom, telephone, email), reservations(numero_reference)');
+        }
+        const { data, error } = result;
+
         if (error) {
             console.error(error);
-            alert("Erreur lors de l'enregistrement : " + error.message);
+            setNotificationModal({ isOpen: true, type: 'error', message: "Erreur lors de l'enregistrement : " + error.message });
         } else if (data) {
-            setFinances([data[0] as Finance, ...finances]);
+            if (editingDocId) {
+                setFinances(finances.map(f => f.id === editingDocId ? data[0] as Finance : f));
+            } else {
+                setFinances([data[0] as Finance, ...finances]);
+            }
             setIsGeneratorModalOpen(false);
             
             // Reset form
+            setEditingDocId(null);
             setClientId('');
             setReservationId('');
             setPackPrice(0);
@@ -130,13 +197,56 @@ export default function FinancesPage() {
             setOptPrice(0);
             setOptQty(1);
             setAcompte(0);
-            alert(docType + " enregistré avec succès !");
+            setNotificationModal({ isOpen: true, type: 'success', message: docType + " enregistré avec succès !" });
         }
         setIsSubmitting(false);
     };
 
+    const handleEditDocument = (doc: Finance) => {
+        setEditingDocId(doc.id);
+        setDocType(doc.type_document);
+        setClientId(doc.client_id || '');
+        setReservationId(doc.reservation_id || '');
+        setDateEmission(new Date(doc.date_creation).toISOString().split('T')[0]);
+        setAcompte(doc.acompte || 0);
+        setIsGeneratorModalOpen(true);
+    };
+
+    const handleDeleteDocument = async (id: string) => {
+        const { error } = await supabase.from('finances').delete().eq('id', id);
+        if (error) {
+            setNotificationModal({ isOpen: true, type: 'error', message: "Erreur lors de la suppression." });
+        } else {
+            setFinances(finances.filter(f => f.id !== id));
+            setNotificationModal({ isOpen: true, type: 'success', message: "Document supprimé avec succès !" });
+        }
+        setDeleteConfirmId(null);
+    };
+
     const formatCurrency = (val: number) => {
         return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' }).format(val);
+    };
+
+    const handleChangeStatus = async (id: string, newStatus: string) => {
+        const doc = finances.find(f => f.id === id);
+        if (!doc) return;
+
+        let updates: any = { statut: newStatus };
+
+        // Convertir Devis en Facture automatiquement
+        if ((newStatus === 'Acompte payé' || newStatus === 'Soldée') && doc.type_document === 'Devis') {
+            updates.type_document = 'Facture';
+            updates.numero_document = doc.numero_document.replace('DEV-', 'FAC-');
+        }
+
+        const { error } = await supabase.from('finances').update(updates).eq('id', id);
+        if (error) {
+            setNotificationModal({ isOpen: true, type: 'error', message: "Erreur lors de la mise à jour du statut." });
+        } else {
+            setFinances(finances.map(f => f.id === id ? { ...f, ...updates } : f));
+            setNotificationModal({ isOpen: true, type: 'success', message: "Statut mis à jour avec succès !" });
+        }
+        setActiveDropdownId(null);
     };
 
     return (
@@ -236,7 +346,7 @@ export default function FinancesPage() {
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-500 mb-1">CA Facturé (Mois)</p>
-                                <h3 className="text-2xl font-bold text-gray-800">{formatCurrency(finances.filter(f => f.type_document === 'Facture').reduce((sum, f) => sum + f.total_ttc, 0))}</h3>
+                                <h3 className="text-2xl font-bold text-gray-800">{formatCurrency(finances.filter(f => f.type_document === 'Facture').reduce((sum, f) => sum + Number(f.total_ttc || 0), 0))}</h3>
                             </div>
                             <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600 text-xl">
                                 <i className="fa-solid fa-chart-line"></i>
@@ -245,7 +355,7 @@ export default function FinancesPage() {
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-500 mb-1">Devis en attente</p>
-                                <h3 className="text-2xl font-bold text-gray-800">{finances.filter(f => f.type_document === 'Devis').length}</h3>
+                                <h3 className="text-2xl font-bold text-gray-800">{finances.filter(f => f.type_document === 'Devis' && f.statut === 'En attente').length}</h3>
                             </div>
                             <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-600 text-xl">
                                 <i className="fa-solid fa-file-signature"></i>
@@ -254,7 +364,7 @@ export default function FinancesPage() {
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-500 mb-1">Reste à recouvrer</p>
-                                <h3 className="text-2xl font-bold text-red-600">{formatCurrency(finances.filter(f => f.type_document === 'Facture').reduce((sum, f) => sum + f.reste_a_payer, 0))}</h3>
+                                <h3 className="text-2xl font-bold text-red-600">{formatCurrency(finances.filter(f => f.type_document === 'Facture').reduce((sum, f) => sum + Number(f.reste_a_payer || 0), 0))}</h3>
                             </div>
                             <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600 text-xl">
                                 <i className="fa-solid fa-wallet"></i>
@@ -274,6 +384,7 @@ export default function FinancesPage() {
                                         <th className="px-6 py-4 font-medium text-right">Total</th>
                                         <th className="px-6 py-4 font-medium text-right">Reste à payer</th>
                                         <th className="px-6 py-4 font-medium">Statut</th>
+                                        <th className="px-6 py-4 font-medium text-center">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm divide-y divide-gray-100">
@@ -293,7 +404,7 @@ export default function FinancesPage() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-gray-600">{new Date(doc.date_emission).toLocaleDateString('fr-FR')}</td>
+                                            <td className="px-6 py-4 text-gray-600">{new Date(doc.date_creation).toLocaleDateString('fr-FR')}</td>
                                             <td className="px-6 py-4">
                                                 <div className="font-medium text-gray-800">{doc.clients?.nom || 'Client inconnu'}</div>
                                                 <div className="text-xs text-gray-500 mt-0.5">{doc.clients?.telephone || ''}</div>
@@ -302,9 +413,47 @@ export default function FinancesPage() {
                                             <td className="px-6 py-4 text-right font-bold text-gray-800">{formatCurrency(doc.total_ttc)}</td>
                                             <td className={`px-6 py-4 text-right font-medium ${doc.reste_a_payer > 0 ? 'text-red-500' : 'text-gray-500'}`}>{formatCurrency(doc.reste_a_payer)}</td>
                                             <td className="px-6 py-4">
-                                                <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${doc.statut === 'Soldée' ? 'bg-green-100 text-green-700 border-green-200' : doc.statut === 'Acompte payé' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'bg-orange-100 text-orange-700 border-orange-200'}`}>
-                                                    {doc.statut}
-                                                </span>
+                                                <div className="flex items-center space-x-2">
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${doc.statut === 'Soldée' ? 'bg-green-100 text-green-700 border-green-200' : doc.statut === 'Acompte payé' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'bg-orange-100 text-orange-700 border-orange-200'}`}>
+                                                        {doc.statut}
+                                                    </span>
+                                                    <div className="relative">
+                                                        <button onClick={() => setActiveDropdownId(activeDropdownId === doc.id ? null : doc.id)} className={`p-1.5 rounded-lg transition ${activeDropdownId === doc.id ? 'text-gray-800 bg-gray-100' : 'text-gray-400 hover:text-gray-800 hover:bg-gray-100'}`} title="Changer le statut">
+                                                            <i className="fa-solid fa-ellipsis-vertical px-1"></i>
+                                                        </button>
+                                                        
+                                                        {activeDropdownId === doc.id && (
+                                                            <>
+                                                                <div className="fixed inset-0 z-10" onClick={() => setActiveDropdownId(null)}></div>
+                                                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-20 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                                                    <div className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">Changer Statut</div>
+                                                                    <button onClick={() => handleChangeStatus(doc.id, 'En attente')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition flex items-center">
+                                                                        <span className="w-2 h-2 rounded-full bg-orange-400 mr-2"></span> En attente
+                                                                    </button>
+                                                                    <button onClick={() => handleChangeStatus(doc.id, 'Acompte payé')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-yellow-50 hover:text-yellow-600 transition flex items-center">
+                                                                        <span className="w-2 h-2 rounded-full bg-yellow-400 mr-2"></span> Acompte payé
+                                                                    </button>
+                                                                    <button onClick={() => handleChangeStatus(doc.id, 'Soldée')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 transition flex items-center">
+                                                                        <span className="w-2 h-2 rounded-full bg-green-400 mr-2"></span> Soldée
+                                                                    </button>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <div className="flex items-center justify-center space-x-2">
+                                                    <button onClick={() => setSelectedDocDetails(doc)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Voir détails">
+                                                        <i className="fa-solid fa-eye"></i>
+                                                    </button>
+                                                    <button onClick={() => handleEditDocument(doc)} className="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition" title="Modifier">
+                                                        <i className="fa-solid fa-pen"></i>
+                                                    </button>
+                                                    <button onClick={() => setDeleteConfirmId(doc.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Supprimer">
+                                                        <i className="fa-solid fa-trash"></i>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -386,11 +535,14 @@ export default function FinancesPage() {
                                         <tr>
                                             <td className="px-4 py-3"><span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">PACK</span></td>
                                             <td className="px-4 py-3">
-                                                <select onChange={e => setPackPrice(Number(e.target.value))} className="w-full border-none bg-transparent font-medium text-gray-800 focus:ring-0 outline-none cursor-pointer">
+                                                <select value={packPrice} onChange={e => setPackPrice(Number(e.target.value))} className="w-full border-none bg-transparent font-medium text-gray-800 focus:ring-0 outline-none cursor-pointer">
                                                     <option value="0">-- Choisir un pack --</option>
                                                     <option value="800000">Demande en mariage Premium</option>
                                                     <option value="600000">Anniversaire Premium</option>
                                                     <option value="1000000">Corporate Premium</option>
+                                                    {packPrice > 0 && ![800000, 600000, 1000000].includes(packPrice) && (
+                                                        <option value={packPrice}>Pack lié à la réservation ({packPrice} FCFA)</option>
+                                                    )}
                                                 </select>
                                             </td>
                                             <td className="px-4 py-3 text-right text-gray-600">{packPrice}</td>
@@ -402,12 +554,15 @@ export default function FinancesPage() {
                                         <tr>
                                             <td className="px-4 py-3"><span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-bold">OPTION</span></td>
                                             <td className="px-4 py-3">
-                                                <select onChange={e => setOptPrice(Number(e.target.value))} className="w-full border-none bg-transparent text-gray-700 focus:ring-0 outline-none cursor-pointer">
+                                                <select value={optPrice} onChange={e => setOptPrice(Number(e.target.value))} className="w-full border-none bg-transparent text-gray-700 focus:ring-0 outline-none cursor-pointer">
                                                     <option value="0">-- Ajouter une option --</option>
                                                     <option value="50000">Décoration romantique</option>
                                                     <option value="150000">Décoration luxe complète</option>
                                                     <option value="100000">Photographe</option>
                                                     <option value="200000">DJ professionnel</option>
+                                                    {optPrice > 0 && ![50000, 150000, 100000, 200000].includes(optPrice) && (
+                                                        <option value={optPrice}>Options liées à la réservation ({optPrice} FCFA)</option>
+                                                    )}
                                                 </select>
                                             </td>
                                             <td className="px-4 py-3 text-right text-gray-600">{optPrice}</td>
@@ -445,16 +600,246 @@ export default function FinancesPage() {
                                 </div>
                             </div>
                         </div>
-                        
-                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3 rounded-b-2xl">
-                            <button onClick={() => setIsGeneratorModalOpen(false)} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Annuler</button>
-                            <button onClick={handleSaveDocument} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-md disabled:opacity-50">
-                                {isSubmitting ? 'Enregistrement...' : "Enregistrer"}
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-between space-x-3 rounded-b-2xl">
+                            <button onClick={() => window.print()} className="px-5 py-2.5 rounded-lg text-sm font-bold bg-gray-800 text-white hover:bg-gray-900 transition shadow-md flex items-center">
+                                <i className="fa-solid fa-print mr-2"></i> Prévisualiser & Imprimer
+                            </button>
+                            <div className="space-x-3">
+                                <button onClick={() => setIsGeneratorModalOpen(false)} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Annuler</button>
+                                <button onClick={handleSaveDocument} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-md disabled:opacity-50">
+                                    {isSubmitting ? 'Enregistrement...' : "Enregistrer"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Notification Modal */}
+            {notificationModal.isOpen && (
+                <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-100 animate-in zoom-in-95 duration-200">
+                        <div className="p-8 text-center">
+                            <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ${notificationModal.type === 'success' ? 'bg-green-100 text-green-500' : notificationModal.type === 'error' ? 'bg-red-100 text-red-500' : 'bg-orange-100 text-orange-500'}`}>
+                                <i className={`fa-solid text-3xl ${notificationModal.type === 'success' ? 'fa-check' : notificationModal.type === 'error' ? 'fa-xmark' : 'fa-exclamation'}`}></i>
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                                {notificationModal.type === 'success' ? 'Succès !' : notificationModal.type === 'error' ? 'Erreur' : 'Attention'}
+                            </h3>
+                            <p className="text-gray-600 mb-8">{notificationModal.message}</p>
+                            <button onClick={() => setNotificationModal({ ...notificationModal, isOpen: false })} className={`w-full py-3.5 rounded-xl text-white font-semibold shadow-lg transition transform hover:-translate-y-0.5 ${notificationModal.type === 'success' ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700' : notificationModal.type === 'error' ? 'bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700' : 'bg-gradient-to-r from-orange-400 to-amber-500 hover:from-orange-500 hover:to-amber-600'}`}>
+                                {notificationModal.type === 'success' ? 'Continuer' : 'Fermer'}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
+            {/* Delete Confirmation Modal */}
+            {deleteConfirmId && (
+                <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center animate-in zoom-in-95 duration-200">
+                        <div className="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i className="fa-solid fa-triangle-exclamation text-3xl"></i>
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-800 mb-2">Êtes-vous sûr ?</h3>
+                        <p className="text-gray-600 mb-8">Cette action est irréversible. Voulez-vous vraiment supprimer ce document financier ?</p>
+                        <div className="flex space-x-3">
+                            <button onClick={() => setDeleteConfirmId(null)} className="flex-1 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-xl transition">Annuler</button>
+                            <button onClick={() => handleDeleteDocument(deleteConfirmId)} className="flex-1 py-3.5 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-semibold rounded-xl shadow-lg transition">Supprimer</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Details Modal */}
+            {selectedDocDetails && (
+                <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[90] flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+                        <div className={`p-6 text-white flex justify-between items-center ${selectedDocDetails.type_document === 'Facture' ? 'bg-gradient-to-r from-blue-600 to-cyan-500' : 'bg-gradient-to-r from-orange-500 to-amber-500'}`}>
+                            <div>
+                                <h3 className="text-2xl font-bold">Détails du {selectedDocDetails.type_document}</h3>
+                                <p className="opacity-90 font-medium mt-1">{selectedDocDetails.numero_document}</p>
+                            </div>
+                            <button onClick={() => setSelectedDocDetails(null)} className="text-white/80 hover:text-white bg-white/20 hover:bg-white/30 p-2 rounded-xl transition">
+                                <i className="fa-solid fa-times text-xl"></i>
+                            </button>
+                        </div>
+                        <div className="p-8 overflow-y-auto">
+                            <div className="grid grid-cols-2 gap-6 mb-8">
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-1">Client</p>
+                                    <p className="font-bold text-gray-800 text-lg">{selectedDocDetails.clients?.nom || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-1">Date</p>
+                                    <p className="font-bold text-gray-800 text-lg">{new Date(selectedDocDetails.date_creation).toLocaleDateString('fr-FR')}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-1">Statut</p>
+                                    <span className={`px-3 py-1 mt-1 inline-block rounded-full text-xs font-semibold border ${selectedDocDetails.statut === 'Soldée' ? 'bg-green-100 text-green-700 border-green-200' : selectedDocDetails.statut === 'Acompte payé' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'bg-orange-100 text-orange-700 border-orange-200'}`}>
+                                        {selectedDocDetails.statut}
+                                    </span>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-1">Réservation Liée</p>
+                                    <p className="font-bold text-gray-800 text-lg">{selectedDocDetails.reservations?.numero_reference || 'Aucune'}</p>
+                                </div>
+                            </div>
+                            {selectedDocDetails.reservations?.type_prestation && (
+                                <div className="bg-gray-50 p-4 rounded-xl mb-6 border border-gray-100">
+                                    <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Prestation choisie (Pack & Options)</p>
+                                    <p className="font-bold text-gray-800">{selectedDocDetails.reservations.type_prestation}</p>
+                                </div>
+                            )}
+                            <div className="bg-slate-50 p-6 rounded-2xl border border-gray-100">
+                                <h4 className="font-bold text-gray-800 mb-4 border-b border-gray-200 pb-3 flex items-center">
+                                    <i className="fa-solid fa-file-invoice-dollar text-blue-500 mr-2"></i> Informations Financières
+                                </h4>
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-500 font-medium">Total HT</span>
+                                        <span className="font-bold text-gray-700">{formatCurrency(selectedDocDetails.total_ht)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-500 font-medium">TVA (0%)</span>
+                                        <span className="font-bold text-gray-700">{formatCurrency(selectedDocDetails.tva)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-lg font-bold border-t border-gray-200 pt-4">
+                                        <span className="text-gray-800">Total TTC</span>
+                                        <span className="text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">{formatCurrency(selectedDocDetails.total_ttc)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center pt-2">
+                                        <span className="text-gray-500 font-medium">Acompte payé</span>
+                                        <span className="font-bold text-green-600">{formatCurrency(selectedDocDetails.acompte)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center font-bold text-lg pt-2">
+                                        <span className="text-gray-800">Reste à payer</span>
+                                        <span className="text-red-500 bg-red-50 px-3 py-1 rounded-lg">{formatCurrency(selectedDocDetails.reste_a_payer)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-between space-x-3 rounded-b-2xl">
+                            <button onClick={() => window.print()} className="px-5 py-2.5 rounded-lg text-sm font-bold bg-gray-800 text-white hover:bg-gray-900 transition shadow-md flex items-center">
+                                <i className="fa-solid fa-print mr-2"></i> Imprimer / PDF
+                            </button>
+                            <button onClick={() => setSelectedDocDetails(null)} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 transition">Fermer</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Template d'impression (Caché sur l'écran, visible à l'impression) */}
+            <div className="hidden print:block fixed inset-0 bg-white z-[9999] p-10 font-sans text-black">
+                {/* Header de la facture/devis */}
+                <div className="flex justify-between items-start border-b-2 border-gray-800 pb-6 mb-8">
+                    <div>
+                        <h1 className="text-4xl font-black text-gray-900 tracking-wider">EBRIÉ LAGOON</h1>
+                        <p className="text-gray-600 mt-2 text-sm font-medium">Zone 4, Abidjan, Côte d'Ivoire</p>
+                        <p className="text-gray-600 text-sm font-medium">contact@ebrielagoon.com</p>
+                        <p className="text-gray-600 text-sm font-medium">+225 07 00 11 22 33</p>
+                        <p className="text-gray-500 text-xs mt-1">RCCM: CI-ABJ-2023-B-12345</p>
+                    </div>
+                    <div className="text-right">
+                        <h2 className="text-3xl font-black text-gray-800 uppercase tracking-widest">{selectedDocDetails ? selectedDocDetails.type_document : docType}</h2>
+                        <p className="text-gray-600 mt-2 font-bold text-lg">{selectedDocDetails ? selectedDocDetails.numero_document : 'DOCUMENT PROVISOIRE'}</p>
+                        <p className="text-gray-600 mt-1">Date d'émission : {new Date().toLocaleDateString('fr-FR')}</p>
+                    </div>
+                </div>
+
+                {/* Info Client */}
+                <div className="mb-10 flex justify-end">
+                    <div className="bg-gray-50 p-6 rounded-lg w-1/2 border border-gray-200">
+                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Facturé à</h3>
+                        <p className="text-xl font-bold text-gray-900 mb-1">{selectedDocDetails ? selectedDocDetails.clients?.nom : (clients.find(c => c.id === clientId)?.nom || 'Client non sélectionné')}</p>
+                        <p className="text-gray-600">{selectedDocDetails ? selectedDocDetails.clients?.telephone : clients.find(c => c.id === clientId)?.telephone}</p>
+                    </div>
+                </div>
+
+                {/* Table des montants */}
+                <div className="mb-10">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-gray-100 text-gray-800 text-sm uppercase tracking-wider">
+                                <th className="py-3 px-4 font-bold border-b-2 border-gray-300">Désignation</th>
+                                <th className="py-3 px-4 font-bold border-b-2 border-gray-300 text-right">Montant FCFA</th>
+                            </tr>
+                        </thead>
+                        <tbody className="text-gray-800">
+                            {/* In print preview for a specific doc, we only have totals. If generating, we have details. */}
+                            {selectedDocDetails ? (
+                                <>
+                                    <tr>
+                                        <td className="py-4 px-4 border-b border-gray-200">
+                                            <p className="font-bold text-gray-800">Prestations Ebrié Lagoon</p>
+                                            {selectedDocDetails.reservations?.type_prestation && (
+                                                <p className="text-sm text-gray-600 mt-1">Détails : {selectedDocDetails.reservations.type_prestation}</p>
+                                            )}
+                                        </td>
+                                        <td className="py-4 px-4 border-b border-gray-200 text-right font-bold align-top">{formatCurrency(selectedDocDetails.total_ht)}</td>
+                                    </tr>
+                                </>
+                            ) : (
+                                <>
+                                    <tr>
+                                        <td className="py-4 px-4 border-b border-gray-200 font-medium">Pack de Base : {packPrice} FCFA x {packQty}</td>
+                                        <td className="py-4 px-4 border-b border-gray-200 text-right font-bold">{formatCurrency(packPrice * packQty)}</td>
+                                    </tr>
+                                    {optPrice > 0 && (
+                                        <tr>
+                                            <td className="py-4 px-4 border-b border-gray-200 font-medium">Option Supplémentaire : {optPrice} FCFA x {optQty}</td>
+                                            <td className="py-4 px-4 border-b border-gray-200 text-right font-bold">{formatCurrency(optPrice * optQty)}</td>
+                                        </tr>
+                                    )}
+                                </>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Totaux */}
+                <div className="flex justify-end">
+                    <div className="w-1/2">
+                        <div className="flex justify-between py-2 text-gray-600">
+                            <span>Total HT</span>
+                            <span className="font-bold">{selectedDocDetails ? formatCurrency(selectedDocDetails.total_ht) : formatCurrency(totalHT)}</span>
+                        </div>
+                        <div className="flex justify-between py-2 text-gray-600">
+                            <span>TVA (0%)</span>
+                            <span className="font-bold">0 FCFA</span>
+                        </div>
+                        <div className="flex justify-between py-3 text-lg font-black text-gray-900 border-t-2 border-gray-800 mt-2">
+                            <span>Total TTC</span>
+                            <span>{selectedDocDetails ? formatCurrency(selectedDocDetails.total_ttc) : formatCurrency(totalTTC)}</span>
+                        </div>
+                        
+                        {(selectedDocDetails ? selectedDocDetails.acompte > 0 : acompte > 0) && (
+                            <div className="flex justify-between py-2 text-gray-600 mt-2 border-t border-gray-200 text-sm">
+                                <span>Acompte versé</span>
+                                <span className="font-bold text-green-600">{selectedDocDetails ? formatCurrency(selectedDocDetails.acompte) : formatCurrency(acompte)}</span>
+                            </div>
+                        )}
+                        <div className="flex justify-between py-2 text-base font-bold text-gray-900 bg-gray-100 px-4 rounded mt-2">
+                            <span>Reste à payer</span>
+                            <span>{selectedDocDetails ? formatCurrency(selectedDocDetails.reste_a_payer) : formatCurrency(resteAPayer)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer / Signature */}
+                <div className="absolute bottom-10 left-10 right-10">
+                    <div className="flex justify-between items-end border-t border-gray-300 pt-8">
+                        <div className="text-xs text-gray-500 w-1/2">
+                            <p className="font-bold mb-1">Conditions de paiement :</p>
+                            <p>Le paiement doit être effectué dans un délai de 15 jours à compter de la date d'émission. En cas de retard, des pénalités pourront être appliquées conformément aux conditions générales de vente.</p>
+                        </div>
+                        <div className="text-center w-1/3">
+                            <p className="font-bold text-gray-800 mb-12">La Direction</p>
+                            <div className="border-b-2 border-gray-400 w-3/4 mx-auto"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     );
 }
