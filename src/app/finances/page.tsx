@@ -26,6 +26,7 @@ type Finance = {
         numero_reference: string;
         type_prestation?: string;
         montant_total?: number;
+        options?: any;
     };
 };
 
@@ -41,6 +42,7 @@ type Reservation = {
     client_id: string;
     type_prestation?: string;
     montant_total?: number;
+    options?: any;
     clients?: {
         nom: string;
     };
@@ -77,6 +79,7 @@ function FinancesContent() {
     const [optPrice, setOptPrice] = useState(0);
     const [optQty, setOptQty] = useState(1);
     const [acompte, setAcompte] = useState(0);
+    const [selectedOptions, setSelectedOptions] = useState<any>({});
 
     const totalHT = (packPrice * packQty) + (optPrice * optQty);
     const tva = 0; // 0%
@@ -113,14 +116,24 @@ function FinancesContent() {
             if (res) {
                 let pPrice = 0;
                 const tp = res.type_prestation || '';
-                if (tp.includes('Mariage')) pPrice = 800000;
-                else if (tp.includes('Anniversaire')) pPrice = 600000;
-                else if (tp.includes('Corporate')) pPrice = 1000000;
+                const match = tp.match(/\(([\d\s]+)\s*FCFA\)/);
+                if (match) {
+                    pPrice = parseInt(match[1].replace(/\s/g, ''));
+                } else {
+                    if (tp.includes('Mariage')) pPrice = 800000;
+                    else if (tp.includes('Anniversaire')) pPrice = 600000;
+                    else if (tp.includes('Corporate')) pPrice = 1000000;
+                }
                 
+                const opts = res.options || {};
+                setSelectedOptions(opts);
+
                 const oPrice = Math.max(0, (res.montant_total || 0) - pPrice);
                 setPackPrice(pPrice);
                 setOptPrice(oPrice);
             }
+        } else {
+            setSelectedOptions({});
         }
     }, [reservationId, reservations]);
 
@@ -128,7 +141,7 @@ function FinancesContent() {
         setIsLoading(true);
         const { data: finData, error: finError } = await supabase
             .from('finances')
-            .select('*, clients(nom, telephone, email), reservations(numero_reference, type_prestation, montant_total)')
+            .select('*, clients(nom, telephone, email), reservations(numero_reference, type_prestation, montant_total, options)')
             .order('created_at', { ascending: false });
         if (finData) setFinances(finData as Finance[]);
         if (finError) console.error(finError);
@@ -136,7 +149,7 @@ function FinancesContent() {
         const { data: cliData } = await supabase.from('clients').select('id, nom, telephone');
         if (cliData) setClients(cliData as Client[]);
 
-        const { data: resData } = await supabase.from('reservations').select('id, numero_reference, client_id, type_prestation, montant_total, clients(nom)');
+        const { data: resData } = await supabase.from('reservations').select('id, numero_reference, client_id, type_prestation, montant_total, options, clients(nom)');
         if (resData) setReservations(resData as unknown as Reservation[]);
 
         setIsLoading(false);
@@ -154,12 +167,15 @@ function FinancesContent() {
         }
         setIsSubmitting(true);
 
+        const finalDocType = acompte > 0 ? 'Facture' : 'Devis';
+        const finalStatut = acompte >= totalTTC ? 'Soldée' : (acompte > 0 ? 'Acompte payé' : 'En attente');
+
         let payload: any = {
-            type_document: docType,
+            type_document: finalDocType,
             date_creation: dateEmission,
             client_id: clientId,
             reservation_id: reservationId || null,
-            statut: docType === 'Devis' ? 'En attente' : (acompte >= totalTTC ? 'Soldée' : (acompte > 0 ? 'Acompte payé' : 'En attente')),
+            statut: finalStatut,
             total_ht: totalHT,
             tva: tva,
             total_ttc: totalTTC,
@@ -169,8 +185,19 @@ function FinancesContent() {
 
         if (!editingDocId) {
             const randomNum = Math.floor(1000 + Math.random() * 9000);
-            const prefix = docType === 'Facture' ? 'FAC' : 'DEV';
+            const prefix = finalDocType === 'Facture' ? 'FACT' : 'DEV';
             payload.numero_document = `${prefix}-${randomNum}`;
+        } else {
+            const doc = finances.find(f => f.id === editingDocId);
+            if (doc) {
+                let numDoc = doc.numero_document || '';
+                if (finalDocType === 'Facture') {
+                    numDoc = numDoc.replace(/^DEV-/, 'FACT-');
+                } else {
+                    numDoc = numDoc.replace(/^FACT?-/, 'DEV-');
+                }
+                payload.numero_document = numDoc;
+            }
         }
 
         let result;
@@ -185,6 +212,27 @@ function FinancesContent() {
             console.error(error);
             setNotificationModal({ isOpen: true, type: 'error', message: "Erreur lors de l'enregistrement : " + error.message });
         } else if (data) {
+            // Update associated reservation
+            if (reservationId) {
+                let newTypePrestation = undefined;
+                if (packPrice === 800000) newTypePrestation = 'Demande en mariage Premium (800 000 FCFA)';
+                else if (packPrice === 600000) newTypePrestation = 'Anniversaire Premium (600 000 FCFA)';
+                else if (packPrice === 1000000) newTypePrestation = 'Corporate Premium (1 000 000 FCFA)';
+
+                const resStatus = acompte > 0 ? 'Confirmée' : 'En attente';
+                const resUpdateData: any = { 
+                    acompte: acompte, 
+                    statut: resStatus,
+                    options: selectedOptions,
+                    montant_total: totalTTC
+                };
+                if (newTypePrestation) {
+                    resUpdateData.type_prestation = newTypePrestation;
+                }
+
+                await supabase.from('reservations').update(resUpdateData).eq('id', reservationId);
+            }
+
             if (editingDocId) {
                 setFinances(finances.map(f => f.id === editingDocId ? data[0] as Finance : f));
             } else {
@@ -201,6 +249,7 @@ function FinancesContent() {
             setOptPrice(0);
             setOptQty(1);
             setAcompte(0);
+            setSelectedOptions({});
             setNotificationModal({ isOpen: true, type: 'success', message: docType + " enregistré avec succès !" });
         }
         setIsSubmitting(false);
@@ -235,18 +284,45 @@ function FinancesContent() {
         const doc = finances.find(f => f.id === id);
         if (!doc) return;
 
+        // Vérifications de l'acompte
+        if (newStatus === 'Acompte payé' && (!doc.acompte || doc.acompte <= 0)) {
+            setNotificationModal({ isOpen: true, type: 'error', message: "Impossible de passer en 'Acompte payé' : aucun acompte n'est enregistré pour ce document. Veuillez le modifier pour ajouter un acompte." });
+            setActiveDropdownId(null);
+            return;
+        }
+
+        if (newStatus === 'Soldée' && (!doc.acompte || doc.acompte < doc.total_ht)) {
+            setNotificationModal({ isOpen: true, type: 'error', message: "Impossible de solder : l'acompte enregistré (" + formatCurrency(doc.acompte || 0) + ") est inférieur au total." });
+            setActiveDropdownId(null);
+            return;
+        }
+
+        if (newStatus === 'En attente' && doc.acompte && doc.acompte > 0) {
+            setNotificationModal({ isOpen: true, type: 'error', message: "Impossible de repasser 'En attente' : un acompte de " + formatCurrency(doc.acompte) + " est déjà enregistré." });
+            setActiveDropdownId(null);
+            return;
+        }
+
         let updates: any = { statut: newStatus };
 
         // Convertir Devis en Facture automatiquement
         if ((newStatus === 'Acompte payé' || newStatus === 'Soldée') && doc.type_document === 'Devis') {
             updates.type_document = 'Facture';
-            updates.numero_document = doc.numero_document.replace('DEV-', 'FAC-');
+            updates.numero_document = doc.numero_document.replace(/^DEV-/, 'FACT-');
         }
 
         const { error } = await supabase.from('finances').update(updates).eq('id', id);
         if (error) {
             setNotificationModal({ isOpen: true, type: 'error', message: "Erreur lors de la mise à jour du statut." });
         } else {
+            // Update associated reservation
+            if (doc.reservation_id) {
+                let resStatus = 'En attente';
+                if (newStatus === 'Acompte payé' || newStatus === 'Soldée') resStatus = 'Confirmée';
+                else if (newStatus === 'Annulée') resStatus = 'Annulée';
+                await supabase.from('reservations').update({ statut: resStatus }).eq('id', doc.reservation_id);
+            }
+
             setFinances(finances.map(f => f.id === id ? { ...f, ...updates } : f));
             setNotificationModal({ isOpen: true, type: 'success', message: "Statut mis à jour avec succès !" });
         }
@@ -558,16 +634,32 @@ function FinancesContent() {
                                         <tr>
                                             <td className="px-4 py-3"><span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-bold">OPTION</span></td>
                                             <td className="px-4 py-3">
-                                                <select value={optPrice} onChange={e => setOptPrice(Number(e.target.value))} className="w-full border-none bg-transparent text-gray-700 focus:ring-0 outline-none cursor-pointer">
-                                                    <option value="0">-- Ajouter une option --</option>
-                                                    <option value="50000">Décoration romantique</option>
-                                                    <option value="150000">Décoration luxe complète</option>
-                                                    <option value="100000">Photographe</option>
-                                                    <option value="200000">DJ professionnel</option>
-                                                    {optPrice > 0 && ![50000, 150000, 100000, 200000].includes(optPrice) && (
-                                                        <option value={optPrice}>Options liées à la réservation ({optPrice} FCFA)</option>
-                                                    )}
-                                                </select>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-1">
+                                                    <label className="flex items-center text-sm cursor-pointer"><input type="checkbox" checked={!!selectedOptions['Décoration romantique (+50K)']} onChange={(e) => {
+                                                        const checked = e.target.checked;
+                                                        setSelectedOptions((prev: any) => ({...prev, 'Décoration romantique (+50K)': checked}));
+                                                        const p = 50000; setOptPrice(prev => checked ? prev + p : Math.max(0, prev - p));
+                                                    }} className="mr-2" /> Déco romantique (+50K)</label>
+                                                    <label className="flex items-center text-sm cursor-pointer"><input type="checkbox" checked={!!selectedOptions['Déco luxe complète (+150K)']} onChange={(e) => {
+                                                        const checked = e.target.checked;
+                                                        setSelectedOptions((prev: any) => ({...prev, 'Déco luxe complète (+150K)': checked}));
+                                                        const p = 150000; setOptPrice(prev => checked ? prev + p : Math.max(0, prev - p));
+                                                    }} className="mr-2" /> Déco luxe complète (+150K)</label>
+                                                    <label className="flex items-center text-sm cursor-pointer"><input type="checkbox" checked={!!selectedOptions['Photographe (+100K)']} onChange={(e) => {
+                                                        const checked = e.target.checked;
+                                                        setSelectedOptions((prev: any) => ({...prev, 'Photographe (+100K)': checked}));
+                                                        const p = 100000; setOptPrice(prev => checked ? prev + p : Math.max(0, prev - p));
+                                                    }} className="mr-2" /> Photographe (+100K)</label>
+                                                    <label className="flex items-center text-sm cursor-pointer"><input type="checkbox" checked={!!selectedOptions['DJ professionnel (+200K)']} onChange={(e) => {
+                                                        const checked = e.target.checked;
+                                                        setSelectedOptions((prev: any) => ({...prev, 'DJ professionnel (+200K)': checked}));
+                                                        const p = 200000; setOptPrice(prev => checked ? prev + p : Math.max(0, prev - p));
+                                                    }} className="mr-2" /> DJ professionnel (+200K)</label>
+                                                </div>
+                                                <div className="mt-3">
+                                                    <label className="text-xs text-gray-500 block mb-1">Montant total Options (Modifiable manuellement)</label>
+                                                    <input type="number" value={optPrice} onChange={e => setOptPrice(Number(e.target.value))} className="w-full border border-gray-300 rounded text-gray-700 px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                                </div>
                                             </td>
                                             <td className="px-4 py-3 text-right text-gray-600">{optPrice}</td>
                                             <td className="px-4 py-3 text-center">
@@ -688,10 +780,27 @@ function FinancesContent() {
                                     <p className="font-bold text-gray-800 text-lg">{selectedDocDetails.reservations?.numero_reference || 'Aucune'}</p>
                                 </div>
                             </div>
-                            {selectedDocDetails.reservations?.type_prestation && (
+                            {selectedDocDetails.reservations && (
                                 <div className="bg-gray-50 p-4 rounded-xl mb-6 border border-gray-100">
                                     <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Prestation choisie (Pack & Options)</p>
-                                    <p className="font-bold text-gray-800">{selectedDocDetails.reservations.type_prestation}</p>
+                                    <p className="font-bold text-gray-800 mb-2">{selectedDocDetails.reservations.type_prestation || 'Pack personnalisé'}</p>
+                                    
+                                    {selectedDocDetails.reservations.options && Object.entries(selectedDocDetails.reservations.options).filter(([_, v]) => v).length > 0 && (
+                                        <div className="mt-3 border-t border-gray-200 pt-2 space-y-1">
+                                            {Object.entries(selectedDocDetails.reservations.options).filter(([_, v]) => v).map(([optName]) => {
+                                                let price = 0;
+                                                if (optName.includes('50K')) price = 50000;
+                                                else if (optName.includes('100K')) price = 100000;
+                                                else if (optName.includes('200K')) price = 200000;
+                                                return (
+                                                    <div key={optName} className="flex justify-between items-center text-sm">
+                                                        <span className="text-gray-600"><i className="fa-solid fa-plus text-blue-500 mr-2 text-xs"></i> {optName.split('(')[0].trim()}</span>
+                                                        <span className="font-semibold text-gray-800">+{formatCurrency(price)}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                             <div className="bg-slate-50 p-6 rounded-2xl border border-gray-100">
@@ -771,17 +880,43 @@ function FinancesContent() {
                         <tbody className="text-gray-800">
                             {/* In print preview for a specific doc, we only have totals. If generating, we have details. */}
                             {selectedDocDetails ? (
-                                <>
-                                    <tr>
-                                        <td className="py-4 px-4 border-b border-gray-200">
-                                            <p className="font-bold text-gray-800">Prestations Ebrié Lagoon</p>
-                                            {selectedDocDetails.reservations?.type_prestation && (
-                                                <p className="text-sm text-gray-600 mt-1">Détails : {selectedDocDetails.reservations.type_prestation}</p>
-                                            )}
-                                        </td>
-                                        <td className="py-4 px-4 border-b border-gray-200 text-right font-bold align-top">{formatCurrency(selectedDocDetails.total_ht)}</td>
-                                    </tr>
-                                </>
+                                (() => {
+                                    let optionsSum = 0;
+                                    const renderedOptions: any[] = [];
+                                    if (selectedDocDetails.reservations?.options) {
+                                        Object.entries(selectedDocDetails.reservations.options).filter(([_, v]) => v).forEach(([optName]) => {
+                                            let optPrice = 0;
+                                            if (optName.includes('50K')) optPrice = 50000;
+                                            else if (optName.includes('100K')) optPrice = 100000;
+                                            else if (optName.includes('200K')) optPrice = 200000;
+                                            optionsSum += optPrice;
+                                            renderedOptions.push(
+                                                <tr key={optName}>
+                                                    <td className="py-4 px-4 border-b border-gray-200">
+                                                        <p className="font-bold text-gray-600">Option : {optName.split('(')[0].trim()}</p>
+                                                    </td>
+                                                    <td className="py-4 px-4 border-b border-gray-200 text-right font-bold align-top">{formatCurrency(optPrice)}</td>
+                                                </tr>
+                                            );
+                                        });
+                                    }
+                                    const basePackPrice = selectedDocDetails.total_ht - optionsSum;
+                                    
+                                    return (
+                                        <>
+                                            <tr>
+                                                <td className="py-4 px-4 border-b border-gray-200">
+                                                    <p className="font-bold text-gray-800">Pack Principal</p>
+                                                    {selectedDocDetails.reservations?.type_prestation && (
+                                                        <p className="text-sm text-gray-600 mt-1">Détails : {selectedDocDetails.reservations.type_prestation}</p>
+                                                    )}
+                                                </td>
+                                                <td className="py-4 px-4 border-b border-gray-200 text-right font-bold align-top">{formatCurrency(basePackPrice)}</td>
+                                            </tr>
+                                            {renderedOptions}
+                                        </>
+                                    );
+                                })()
                             ) : (
                                 <>
                                     <tr>

@@ -12,6 +12,7 @@ export default function ReservationsPage() {
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [isClientSearchModalOpen, setIsClientSearchModalOpen] = useState(false);
     const [clientSearchTerm, setClientSearchTerm] = useState('');
+    const [showNewClientForm, setShowNewClientForm] = useState(false);
 
     // Supabase Data
     const [reservations, setReservations] = useState<any[]>([]);
@@ -41,10 +42,20 @@ export default function ReservationsPage() {
     const [optionsPrice, setOptionsPrice] = useState(0);
     const [optionsList, setOptionsList] = useState<any>({});
     const [totalMontant, setTotalMontant] = useState(0);
+    const [acompte, setAcompte] = useState(0);
+    const [modePaiement, setModePaiement] = useState('');
 
     useEffect(() => {
         setTotalMontant(packPrice + optionsPrice);
     }, [packPrice, optionsPrice]);
+
+    useEffect(() => {
+        if (acompte > 0) {
+            setReservationStatus('Confirmée');
+        } else if (reservationStatus === 'Confirmée') {
+            setReservationStatus('En attente');
+        }
+    }, [acompte]);
 
     useEffect(() => {
         fetchReservations();
@@ -116,9 +127,17 @@ export default function ReservationsPage() {
             // 2. Create Reservation
             const refNumber = 'RES-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
             
+            let finalReservationStatus = reservationStatus;
+            if (acompte > 0 && (reservationStatus === 'En attente' || reservationStatus === 'Annulée')) {
+                finalReservationStatus = 'Confirmée';
+            } else if (acompte === 0 && reservationStatus === 'Confirmée') {
+                finalReservationStatus = 'En attente';
+            }
+
             let resError;
+            let actualResId = null;
             if (editingReservationId) {
-                const { error } = await supabase
+                const { data, error } = await supabase
                     .from('reservations')
                     .update({
                         client_id: finalClientId,
@@ -128,13 +147,17 @@ export default function ReservationsPage() {
                         type_prestation: packType || 'Standard',
                         nb_personnes: nbPersonnes,
                         montant_total: totalMontant,
-                        statut: reservationStatus,
-                        options: optionsList
+                        statut: finalReservationStatus,
+                        options: optionsList,
+                        acompte: acompte
                     })
-                    .eq('numero_reference', editingReservationId);
+                    .eq('numero_reference', editingReservationId)
+                    .select()
+                    .single();
                 resError = error;
+                if (data) actualResId = data.id;
             } else {
-                const { error } = await supabase
+                const { data, error } = await supabase
                     .from('reservations')
                     .insert([{
                         numero_reference: refNumber,
@@ -145,13 +168,50 @@ export default function ReservationsPage() {
                         type_prestation: packType || 'Standard',
                         nb_personnes: nbPersonnes,
                         montant_total: totalMontant,
-                        statut: reservationStatus,
-                        options: optionsList
-                    }]);
+                        statut: finalReservationStatus,
+                        options: optionsList,
+                        acompte: acompte
+                    }])
+                    .select()
+                    .single();
                 resError = error;
+                if (data) actualResId = data.id;
             }
 
             if (resError) throw resError;
+
+            // 3. Finance Document Generation/Update
+            if (actualResId) {
+                const { data: finDataArray } = await supabase.from('finances').select('*').eq('reservation_id', actualResId).limit(1);
+                const finData = finDataArray && finDataArray.length > 0 ? finDataArray[0] : null;
+                
+                const financePayload = {
+                    type_document: acompte > 0 ? 'Facture' : 'Devis',
+                    statut: acompte >= totalMontant ? 'Soldée' : (acompte > 0 ? 'Acompte payé' : 'En attente'),
+                    total_ht: totalMontant,
+                    total_ttc: totalMontant,
+                    acompte: acompte,
+                    reste_a_payer: totalMontant - acompte,
+                    client_id: finalClientId,
+                    reservation_id: actualResId,
+                    date_creation: new Date().toISOString()
+                };
+
+                if (finData) {
+                    let numDoc = finData.numero_document || '';
+                    if (acompte > 0) {
+                        numDoc = numDoc.replace(/^DEV-/, 'FACT-');
+                    } else if (acompte === 0) {
+                        numDoc = numDoc.replace(/^FACT?-/, 'DEV-');
+                    }
+                    await supabase.from('finances').update({ ...financePayload, numero_document: numDoc }).eq('id', finData.id);
+                } else {
+                    await supabase.from('finances').insert([{
+                        numero_document: (acompte > 0 ? 'FACT-' : 'DEV-') + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
+                        ...financePayload
+                    }]);
+                }
+            }
 
             // Success
             setNotification({ message: editingReservationId ? 'Réservation modifiée avec succès !' : 'Réservation enregistrée avec succès !', type: 'success' });
@@ -190,18 +250,47 @@ export default function ReservationsPage() {
         setHeureDebut(r.heure_debut ? r.heure_debut.substring(0, 5) : '');
         setNbPersonnes(r.nb_personnes || 1);
         
-        setPackType(r.type_prestation || '');
-        // Determine pack price from packType (basic logic based on what's in the select)
-        if (r.type_prestation?.includes('Mariage')) setPackPrice(800000);
-        else if (r.type_prestation?.includes('Anniversaire')) setPackPrice(600000);
-        else if (r.type_prestation?.includes('Corporate')) setPackPrice(1000000);
-        else setPackPrice(0);
+        // Sanitize options and calculate exact optionsPrice
+        const rawOptions = r.options || {};
+        const strOpts = JSON.stringify(rawOptions).toLowerCase();
+        const cleanOptions: any = {};
+        let calcOptPrice = 0;
+
+        if (strOpts.includes('romantique')) {
+            cleanOptions['Décoration romantique (+50K)'] = true;
+            calcOptPrice += 50000;
+        }
+        if (strOpts.includes('photographe')) {
+            cleanOptions['Photographe (+100K)'] = true;
+            calcOptPrice += 100000;
+        }
+        if (strOpts.includes('dj')) {
+            cleanOptions['DJ professionnel (+200K)'] = true;
+            calcOptPrice += 200000;
+        }
+
+        // Determine pack price from packType to visually match the select
+        let exactPackType = '';
+        if (r.type_prestation?.includes('Mariage')) {
+            exactPackType = 'Demande en mariage Premium (800 000 FCFA)';
+        } else if (r.type_prestation?.includes('Anniversaire')) {
+            exactPackType = 'Anniversaire Premium (600 000 FCFA)';
+        } else if (r.type_prestation?.includes('Corporate')) {
+            exactPackType = 'Corporate Premium (1 000 000 FCFA)';
+        } else {
+            exactPackType = r.type_prestation || '';
+        }
+        
+        // Pack price is strictly derived from the DB's total minus the options
+        const calculatedPackPrice = Math.max(0, (r.montant_total || 0) - calcOptPrice);
+
+        setPackType(exactPackType);
+        setPackPrice(calculatedPackPrice);
         
         setReservationStatus(r.statut || 'En attente');
-        setOptionsList(r.options || {});
-        // Calculate options price by summing values of checked options
-        // For simplicity, let's just use totalMontant - packPrice
-        setOptionsPrice((r.montant_total || 0) - (r.type_prestation?.includes('Mariage') ? 800000 : r.type_prestation?.includes('Anniversaire') ? 600000 : r.type_prestation?.includes('Corporate') ? 1000000 : 0));
+        setOptionsList(cleanOptions);
+        setOptionsPrice(calcOptPrice);
+        setAcompte(r.acompte || 0);
         
         setIsReservationModalOpen(true);
     };
@@ -218,6 +307,8 @@ export default function ReservationsPage() {
         setReservationStatus('En attente');
         setOptionsList({});
         setOptionsPrice(0);
+        setAcompte(0);
+        setModePaiement('');
         setIsReservationModalOpen(true);
     };
 
@@ -226,14 +317,12 @@ export default function ReservationsPage() {
         setTimeout(() => setNotification(null), 3000);
     };
 
-    const handleOptionChange = (e: any) => {
-        const price = parseInt(e.target.dataset.price) || 0;
-        const optionName = e.target.parentElement.innerText.trim();
+    const handleOptionChange = (e: any, optionName: string, price: number) => {
         if (e.target.checked) {
             setOptionsPrice(prev => prev + price);
             setOptionsList((prev:any) => ({...prev, [optionName]: true}));
         } else {
-            setOptionsPrice(prev => prev - price);
+            setOptionsPrice(prev => Math.max(0, prev - price));
             const newList = {...optionsList};
             delete newList[optionName];
             setOptionsList(newList);
@@ -261,7 +350,14 @@ export default function ReservationsPage() {
         }
     }, []);
 
-    const selectedPackPrice = selectedReservation?.raw?.type_prestation?.includes('Mariage') ? 800000 : selectedReservation?.raw?.type_prestation?.includes('Anniversaire') ? 600000 : selectedReservation?.raw?.type_prestation?.includes('Corporate') ? 1000000 : 0;
+    let selectedPackPrice = 0;
+    const tpStr = selectedReservation?.raw?.type_prestation || '';
+    const tpMatch = tpStr.match(/\(([\d\s]+)\s*FCFA\)/);
+    if (tpMatch) {
+        selectedPackPrice = parseInt(tpMatch[1].replace(/\s/g, ''));
+    } else {
+        selectedPackPrice = tpStr.includes('Mariage') ? 800000 : tpStr.includes('Anniversaire') ? 600000 : tpStr.includes('Corporate') ? 1000000 : 0;
+    }
     const selectedOptPrice = Math.max(0, (selectedReservation?.raw?.montant_total || 0) - selectedPackPrice);
 
     return (
@@ -561,12 +657,15 @@ export default function ReservationsPage() {
                             <select id="resPack" value={packType} onChange={(e) => {
                                 const opt = e.target.options[e.target.selectedIndex];
                                 setPackPrice(parseInt(opt.getAttribute('data-price') || '0'));
-                                setPackType(opt.innerText);
+                                setPackType(opt.value);
                             }} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-blue-50">
                                 <option value="" data-price="0">-- Choisir un pack --</option>
                                 <option value="Demande en mariage Premium (800 000 FCFA)" data-price="800000">Demande en mariage Premium (800 000 FCFA)</option>
                                 <option value="Anniversaire Premium (600 000 FCFA)" data-price="600000">Anniversaire Premium (600 000 FCFA)</option>
                                 <option value="Corporate Premium (1 000 000 FCFA)" data-price="1000000">Corporate Premium (1 000 000 FCFA)</option>
+                                {packType && !['Demande en mariage Premium (800 000 FCFA)', 'Anniversaire Premium (600 000 FCFA)', 'Corporate Premium (1 000 000 FCFA)'].includes(packType) && (
+                                    <option value={packType} data-price={packPrice}>{packType}</option>
+                                )}
                             </select>
                         </div>
                         <div>
@@ -602,22 +701,37 @@ export default function ReservationsPage() {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Acompte Payé (FCFA)</label>
-                            <input type="number" step="1000" placeholder="0" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-green-600 font-medium" />
+                            <input type="number" value={acompte || ''} onChange={e => setAcompte(Number(e.target.value))} step="1000" placeholder="0" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-green-600 font-medium" />
                         </div>
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-1">Mode de Paiement (Acompte)</label>
                             <div className="flex space-x-4 mt-2">
-                                <label className="flex items-center text-sm cursor-pointer"><input type="radio" name="pay" className="mr-2" /> Wave/Orange/MTN</label>
-                                <label className="flex items-center text-sm cursor-pointer"><input type="radio" name="pay" className="mr-2" /> Virement / Chèque</label>
-                                <label className="flex items-center text-sm cursor-pointer"><input type="radio" name="pay" className="mr-2" /> Espèces</label>
+                                <label className="flex items-center text-sm cursor-pointer"><input type="radio" checked={modePaiement === 'Mobile Money'} onChange={() => setModePaiement('Mobile Money')} name="pay" className="mr-2" /> Wave/Orange/MTN</label>
+                                <label className="flex items-center text-sm cursor-pointer"><input type="radio" checked={modePaiement === 'Virement / Chèque'} onChange={() => setModePaiement('Virement / Chèque')} name="pay" className="mr-2" /> Virement / Chèque</label>
+                                <label className="flex items-center text-sm cursor-pointer"><input type="radio" checked={modePaiement === 'Espèces'} onChange={() => setModePaiement('Espèces')} name="pay" className="mr-2" /> Espèces</label>
                             </div>
                         </div>
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-1">Options Additionnelles</label>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                <label className="flex items-center text-sm cursor-pointer"><input type="checkbox" onChange={handleOptionChange} data-price="50000" className="mr-2" /> Décoration romantique (+50K)</label>
-                                <label className="flex items-center text-sm cursor-pointer"><input type="checkbox" onChange={handleOptionChange} data-price="100000" className="mr-2" /> Photographe (+100K)</label>
-                                <label className="flex items-center text-sm cursor-pointer"><input type="checkbox" onChange={handleOptionChange} data-price="200000" className="mr-2" /> DJ professionnel (+200K)</label>
+                                <label className="flex items-center text-sm cursor-pointer">
+                                    <input type="checkbox" 
+                                        checked={!!optionsList['Décoration romantique (+50K)']} 
+                                        onChange={(e) => handleOptionChange(e, 'Décoration romantique (+50K)', 50000)} 
+                                        data-price="50000" className="mr-2" /> Décoration romantique (+50K)
+                                </label>
+                                <label className="flex items-center text-sm cursor-pointer">
+                                    <input type="checkbox" 
+                                        checked={!!optionsList['Photographe (+100K)']} 
+                                        onChange={(e) => handleOptionChange(e, 'Photographe (+100K)', 100000)} 
+                                        data-price="100000" className="mr-2" /> Photographe (+100K)
+                                </label>
+                                <label className="flex items-center text-sm cursor-pointer">
+                                    <input type="checkbox" 
+                                        checked={!!optionsList['DJ professionnel (+200K)']} 
+                                        onChange={(e) => handleOptionChange(e, 'DJ professionnel (+200K)', 200000)} 
+                                        data-price="200000" className="mr-2" /> DJ professionnel (+200K)
+                                </label>
                             </div>
                         </div>
                         <div className="col-span-2 mt-2">
@@ -670,19 +784,23 @@ export default function ReservationsPage() {
                     </div>
                     <div>
                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Statut</h4>
-                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold border border-green-200">Confirmée</span>
+                        <span className={"px-3 py-1 rounded-full text-xs font-semibold border " + (selectedReservation?.statutColor || 'bg-orange-100 text-orange-700 border-orange-200')}>{selectedReservation?.statut || 'En attente'}</span>
                     </div>
                 </div>
             </div>
             <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-between rounded-b-2xl">
                 <button onClick={() => setIsDetailsModalOpen(!isDetailsModalOpen)} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Fermer</button>
                 <div className="space-x-3">
-                    <Link href={`/finances?action=new_doc&type=Devis&client_id=${selectedReservation?.raw?.client_id || ''}&reservation_id=${selectedReservation?.raw?.id || ''}&pack_price=${selectedPackPrice}&opt_price=${selectedOptPrice}`} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition shadow-sm inline-flex items-center">
-                        <i className="fa-solid fa-file-signature mr-2"></i> Générer Devis
-                    </Link>
-                    <Link href={`/finances?action=new_doc&type=Facture&client_id=${selectedReservation?.raw?.client_id || ''}&reservation_id=${selectedReservation?.raw?.id || ''}&pack_price=${selectedPackPrice}&opt_price=${selectedOptPrice}`} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-md inline-flex items-center">
-                        <i className="fa-solid fa-file-invoice-dollar mr-2"></i> Générer Facture
-                    </Link>
+                    {selectedReservation?.statut !== 'Confirmée' && (
+                        <Link href={`/finances?action=new_doc&type=Devis&client_id=${selectedReservation?.raw?.client_id || ''}&reservation_id=${selectedReservation?.raw?.id || ''}&pack_price=${selectedPackPrice}&opt_price=${selectedOptPrice}`} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition shadow-sm inline-flex items-center">
+                            <i className="fa-solid fa-file-signature mr-2"></i> Générer Devis
+                        </Link>
+                    )}
+                    {selectedReservation?.statut === 'Confirmée' && (
+                        <Link href={`/finances?action=new_doc&type=Facture&client_id=${selectedReservation?.raw?.client_id || ''}&reservation_id=${selectedReservation?.raw?.id || ''}&pack_price=${selectedPackPrice}&opt_price=${selectedOptPrice}`} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-md inline-flex items-center">
+                            <i className="fa-solid fa-file-invoice-dollar mr-2"></i> Générer Facture
+                        </Link>
+                    )}
                 </div>
             </div>
         </div>
@@ -714,8 +832,8 @@ export default function ReservationsPage() {
                 <h3 className="text-lg font-bold text-gray-800">Rechercher un Client</h3>
                 <button onClick={() => setIsClientSearchModalOpen(false)} className="text-gray-400 hover:text-red-500 transition text-xl"><i className="fa-solid fa-times"></i></button>
             </div>
-            <div className="p-4 border-b border-gray-100">
-                <div className="relative">
+            <div className="p-4 border-b border-gray-100 flex items-center space-x-3">
+                <div className="relative flex-1">
                     <i className="fa-solid fa-search absolute left-3 top-3 text-gray-400"></i>
                     <input 
                         type="text" 
@@ -725,10 +843,57 @@ export default function ReservationsPage() {
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                     />
                 </div>
+                <button onClick={() => setShowNewClientForm(!showNewClientForm)} className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition font-semibold text-sm whitespace-nowrap">
+                    <i className={`fa-solid ${showNewClientForm ? 'fa-minus' : 'fa-plus'} mr-1`}></i> Nouveau
+                </button>
             </div>
             <div className="flex-1 overflow-y-auto p-2">
-                {clientsList.filter((c:any) => c.nom.toLowerCase().includes(clientSearchTerm.toLowerCase()) || c.telephone.includes(clientSearchTerm)).length === 0 ? (
-                    <div className="p-6 text-center text-gray-500">Aucun client trouvé.</div>
+                {(showNewClientForm || clientsList.filter((c:any) => c.nom.toLowerCase().includes(clientSearchTerm.toLowerCase()) || c.telephone.includes(clientSearchTerm)).length === 0) ? (
+                    <div className="p-4">
+                        <div className="bg-blue-50 p-5 rounded-xl border border-blue-100 shadow-inner">
+                            <p className="text-sm text-blue-800 font-semibold mb-3 text-center">
+                                {showNewClientForm ? "Création d'un nouveau client" : "Ce client n'existe pas. Vous pouvez le créer rapidement :"}
+                            </p>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-blue-700 mb-1">Nom du client *</label>
+                                    <input type="text" id="quickClientName" defaultValue={!/^\d/.test(clientSearchTerm) ? clientSearchTerm : ''} placeholder="Ex: Jean Dupont" className="w-full border border-blue-200 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-blue-700 mb-1">Téléphone</label>
+                                    <input type="text" id="quickClientPhone" defaultValue={/^\d/.test(clientSearchTerm) ? clientSearchTerm : ''} placeholder="Ex: 07 07..." className="w-full border border-blue-200 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                </div>
+                                <button 
+                                    onClick={async () => {
+                                        const n = (document.getElementById('quickClientName') as HTMLInputElement).value;
+                                        const p = (document.getElementById('quickClientPhone') as HTMLInputElement).value;
+                                        if (!n.trim()) {
+                                            setNotification({ message: 'Le nom du client est requis.', type: 'error' });
+                                            return;
+                                        }
+                                        try {
+                                            const { data, error } = await supabase.from('clients').insert([{ nom: n, telephone: p }]).select().single();
+                                            if (error) throw error;
+                                            setClientsList(prev => [...prev, data]);
+                                            setClientId(data.id);
+                                            setClientName(data.nom);
+                                            setClientPhone(data.telephone || '');
+                                            setNotification({ message: 'Client ajouté et sélectionné avec succès !', type: 'success' });
+                                            setIsClientSearchModalOpen(false);
+                                            setClientSearchTerm('');
+                                            setShowNewClientForm(false);
+                                        } catch (e) {
+                                            console.error(e);
+                                            setNotification({ message: 'Erreur lors de la création du client.', type: 'error' });
+                                        }
+                                    }}
+                                    className="w-full py-2 mt-2 bg-blue-600 text-white rounded text-sm font-bold hover:bg-blue-700 transition shadow-md"
+                                >
+                                    Créer et Sélectionner
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 ) : (
                     clientsList.filter((c:any) => c.nom.toLowerCase().includes(clientSearchTerm.toLowerCase()) || c.telephone.includes(clientSearchTerm)).map((client: any) => (
                         <div 

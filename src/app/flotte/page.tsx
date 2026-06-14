@@ -30,6 +30,23 @@ export default function FlottePage() {
     const [moteur, setMoteur] = useState('');
     const [statut, setStatut] = useState('Disponible');
 
+    // Nouveaux états pour Carburant et Affectation
+    const [isCarburantModalOpen, setIsCarburantModalOpen] = useState(false);
+    const [isAffectationModalOpen, setIsAffectationModalOpen] = useState(false);
+    const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
+
+    // Formulaire Carburant
+    const [carbNavireId, setCarbNavireId] = useState('');
+    const [carbDate, setCarbDate] = useState('');
+    const [carbQuantite, setCarbQuantite] = useState<number>(0);
+    const [carbMontant, setCarbMontant] = useState<number>(0);
+
+    // Formulaire Affectation
+    const [affNavireId, setAffNavireId] = useState('');
+    const [affType, setAffType] = useState('Course');
+    const [affEquipage, setAffEquipage] = useState('');
+    const [affDate, setAffDate] = useState('');
+
     useEffect(() => {
         fetchNavires();
     }, []);
@@ -63,6 +80,40 @@ export default function FlottePage() {
             alert('Navire ajouté avec succès !');
         }
         setIsSubmitting(false);
+    };
+
+    const handleSaveCarburant = async () => {
+        if (!carbNavireId || !carbDate || carbQuantite <= 0) {
+            setNotification({ message: 'Veuillez remplir les champs obligatoires.', type: 'error' });
+            setTimeout(() => setNotification(null), 3000);
+            return;
+        }
+        setIsSubmitting(true);
+        // Simulation d'enregistrement en attendant la création de la table
+        setTimeout(() => {
+            setIsSubmitting(false);
+            setIsCarburantModalOpen(false);
+            setNotification({ message: 'Saisie de carburant enregistrée avec succès !', type: 'success' });
+            setCarbNavireId(''); setCarbDate(''); setCarbQuantite(0); setCarbMontant(0);
+            setTimeout(() => setNotification(null), 3000);
+        }, 800);
+    };
+
+    const handleSaveAffectation = async () => {
+        if (!affNavireId || !affDate || !affType) {
+            setNotification({ message: 'Veuillez remplir les champs obligatoires.', type: 'error' });
+            setTimeout(() => setNotification(null), 3000);
+            return;
+        }
+        setIsSubmitting(true);
+        // Simulation d'enregistrement en attendant la création de la table
+        setTimeout(() => {
+            setIsSubmitting(false);
+            setIsAffectationModalOpen(false);
+            setNotification({ message: 'Nouvelle affectation enregistrée avec succès !', type: 'success' });
+            setAffNavireId(''); setAffType('Course'); setAffEquipage(''); setAffDate('');
+            setTimeout(() => setNotification(null), 3000);
+        }, 800);
     };
 
     return (
@@ -154,10 +205,10 @@ export default function FlottePage() {
                             <p className="text-sm text-gray-500">Gestion des catamarans, équipages et plannings du jour</p>
                         </div>
                         <div className="flex space-x-3">
-                            <button className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-xl shadow-sm transition text-sm font-medium flex items-center">
+                            <button onClick={() => setIsCarburantModalOpen(true)} className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-xl shadow-sm transition text-sm font-medium flex items-center">
                                 <i className="fa-solid fa-gas-pump mr-2 text-orange-500"></i> Saisir Carburant
                             </button>
-                            <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl shadow-md transition transform hover:-translate-y-0.5 text-sm font-medium flex items-center">
+                            <button onClick={() => setIsAffectationModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl shadow-md transition transform hover:-translate-y-0.5 text-sm font-medium flex items-center">
                                 <i className="fa-solid fa-plus mr-2"></i> Nouvelle Affectation
                             </button>
                         </div>
@@ -309,6 +360,99 @@ export default function FlottePage() {
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+            {/* Modal Saisir Carburant */}
+            {isCarburantModalOpen && (
+                <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h3 className="text-lg font-bold text-gray-800">Saisir Carburant</h3>
+                            <button onClick={() => setIsCarburantModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition"><i className="fa-solid fa-times text-xl"></i></button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Navire *</label>
+                                <select value={carbNavireId} onChange={e => setCarbNavireId(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="">-- Sélectionner un navire --</option>
+                                    {navires.map(n => <option key={n.id} value={n.id}>{n.nom_navire}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                                <input type="date" value={carbDate} onChange={e => setCarbDate(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Quantité (L) *</label>
+                                    <input type="number" min="0" value={carbQuantite} onChange={e => setCarbQuantite(Number(e.target.value))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Montant (FCFA)</label>
+                                    <input type="number" min="0" value={carbMontant} onChange={e => setCarbMontant(Number(e.target.value))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3">
+                            <button onClick={() => setIsCarburantModalOpen(false)} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Annuler</button>
+                            <button onClick={handleSaveCarburant} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-orange-500 text-white hover:bg-orange-600 transition shadow-md disabled:opacity-50">
+                                {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Nouvelle Affectation */}
+            {isAffectationModalOpen && (
+                <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h3 className="text-lg font-bold text-gray-800">Nouvelle Affectation</h3>
+                            <button onClick={() => setIsAffectationModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition"><i className="fa-solid fa-times text-xl"></i></button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Navire *</label>
+                                <select value={affNavireId} onChange={e => setAffNavireId(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="">-- Sélectionner un navire --</option>
+                                    {navires.map(n => <option key={n.id} value={n.id}>{n.nom_navire}</option>)}
+                                </select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                                    <select value={affType} onChange={e => setAffType(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                        <option>Course</option>
+                                        <option>Maintenance</option>
+                                        <option>Transfert</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                                    <input type="date" value={affDate} onChange={e => setAffDate(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Équipage (Capitaine, etc.)</label>
+                                <input type="text" placeholder="ex: Cpt. Kouassi, Marin Bamba" value={affEquipage} onChange={e => setAffEquipage(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3">
+                            <button onClick={() => setIsAffectationModalOpen(false)} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Annuler</button>
+                            <button onClick={handleSaveAffectation} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-md disabled:opacity-50">
+                                {isSubmitting ? 'Enregistrement...' : 'Confirmer l\'affectation'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Notification Toast */}
+            {notification && (
+                <div className={`fixed bottom-4 right-4 px-6 py-3 rounded-xl shadow-lg text-white font-medium z-50 animate-in slide-in-from-bottom-5 ${notification.type === 'success' ? 'bg-green-600' : notification.type === 'error' ? 'bg-red-600' : 'bg-blue-600'}`}>
+                    <i className={`fa-solid ${notification.type === 'success' ? 'fa-check-circle' : notification.type === 'error' ? 'fa-triangle-exclamation' : 'fa-info-circle'} mr-2`}></i>
+                    {notification.message}
                 </div>
             )}
         </div>
