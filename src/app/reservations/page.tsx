@@ -21,6 +21,8 @@ export default function ReservationsPage() {
     // Nouveaux états UX
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     const [selectedReservation, setSelectedReservation] = useState<any>(null);
     const [notification, setNotification] = useState<{message: string, type: 'success' | 'info' | 'error'} | null>(null);
     
@@ -335,20 +337,17 @@ export default function ReservationsPage() {
     };
 
     const filteredReservations = reservations.filter(res => {
-        const term = (searchTerm || "").toLowerCase();
-        return res.client.toLowerCase().includes(term) || 
-               res.phone.includes(term) || 
-               res.id.toLowerCase().includes(term);
+        const matchesTab = activeTab === 'all' ? true : res.statut.toLowerCase() === activeTab;
+        const matchesSearch = res.client.toLowerCase().includes(searchTerm.toLowerCase()) || res.id.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesTab && matchesSearch;
     });
 
+    const totalItems = filteredReservations.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedReservations = filteredReservations.slice(startIndex, startIndex + itemsPerPage);
 
-    // Set default tab on mount
-    useEffect(() => {
-        // Just setting a default if needed
-        if (activeTab === 'all') {
-            setActiveTab('users'); // Default for parametres
-        }
-    }, []);
+
 
     let selectedPackPrice = 0;
     const tpStr = selectedReservation?.raw?.type_prestation || '';
@@ -522,7 +521,7 @@ export default function ReservationsPage() {
                                     </td>
                                 </tr>
                             )}
-                            {!isLoading && filteredReservations.map((res, idx) => (
+                            {!isLoading && paginatedReservations.map((res, idx) => (
                             <tr key={idx} className="hover:bg-blue-50/50 transition">
                                 <td className="px-6 py-4">
                                     <span className="font-semibold text-gray-900">{res.id}</span>
@@ -554,7 +553,7 @@ export default function ReservationsPage() {
                                 </td>
                             </tr>
                             ))}
-                            {!isLoading && filteredReservations.length === 0 && (
+                            {!isLoading && paginatedReservations.length === 0 && (
                                 <tr>
                                     <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                                         Aucune réservation trouvée pour "{searchTerm}"
@@ -568,22 +567,30 @@ export default function ReservationsPage() {
                 <div className="px-6 py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center space-x-2">
                         <span className="text-sm text-gray-500">Afficher</span>
-                        <select className="border border-gray-200 rounded text-sm text-gray-700 py-1 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="10">11</option>
+                        <select value={itemsPerPage} onChange={(e) => {setItemsPerPage(Number(e.target.value)); setCurrentPage(1);}} className="border border-gray-200 rounded text-sm text-gray-700 py-1 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="10">10</option>
                             <option value="25">25</option>
                             <option value="50">50</option>
                             <option value="100">100</option>
                         </select>
                         <span className="text-sm text-gray-500">par page</span>
                     </div>
-                    <span className="text-sm text-gray-500">Affichage 1 à 11 sur 124 réservations</span>
+                    <span className="text-sm text-gray-500">Affichage {totalItems === 0 ? 0 : startIndex + 1} à {Math.min(startIndex + itemsPerPage, totalItems)} sur {totalItems} réservations</span>
                     <div className="flex space-x-1">
-                        <button className="px-3 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50" disabled><i className="fa-solid fa-chevron-left text-xs"></i></button>
-                        <button className="px-3 py-1 rounded bg-blue-600 text-white font-medium">1</button>
-                        <button className="px-3 py-1 rounded border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium">2</button>
-                        <button className="px-3 py-1 rounded border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium">3</button>
-                        <span className="px-3 py-1 text-gray-500">...</span>
-                        <button className="px-3 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50"><i className="fa-solid fa-chevron-right text-xs"></i></button>
+                        <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-3 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50"><i className="fa-solid fa-chevron-left text-xs"></i></button>
+                        
+                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                            .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                            .map((p, i, arr) => {
+                                const btn = <button key={p} onClick={() => setCurrentPage(p)} className={`px-3 py-1 rounded font-medium ${currentPage === p ? 'bg-blue-600 text-white' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}>{p}</button>;
+                                if (i > 0 && arr[i - 1] !== p - 1) {
+                                    return <span key={`ellipsis-${p}`} className="flex items-center"><span className="px-2 text-gray-500">...</span>{btn}</span>;
+                                }
+                                return btn;
+                            })
+                        }
+
+                        <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="px-3 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50"><i className="fa-solid fa-chevron-right text-xs"></i></button>
                     </div>
                 </div>
             </div>

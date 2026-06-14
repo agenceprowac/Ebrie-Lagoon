@@ -68,6 +68,8 @@ function FinancesContent() {
     const [editingDocId, setEditingDocId] = useState<string | null>(null);
     const [selectedDocDetails, setSelectedDocDetails] = useState<Finance | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     // Form
     const [docType, setDocType] = useState('Devis');
@@ -453,7 +455,15 @@ function FinancesContent() {
                     </div>
 
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div className="overflow-x-auto">
+                        {(() => {
+                            const filteredFinances = finances.filter(f => activeTab === 'all' || f.type_document === activeTab);
+                            const totalItems = filteredFinances.length;
+                            const totalPages = Math.ceil(totalItems / itemsPerPage);
+                            const startIndex = (currentPage - 1) * itemsPerPage;
+                            const paginatedFinances = filteredFinances.slice(startIndex, startIndex + itemsPerPage);
+                            return (
+                                <>
+                                    <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse whitespace-nowrap">
                                 <thead>
                                     <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
@@ -470,9 +480,9 @@ function FinancesContent() {
                                 <tbody className="text-sm divide-y divide-gray-100">
                                     {isLoading ? (
                                         <tr><td colSpan={7} className="text-center py-6 text-gray-500">Chargement...</td></tr>
-                                    ) : finances.length === 0 ? (
+                                    ) : paginatedFinances.length === 0 ? (
                                         <tr><td colSpan={7} className="text-center py-6 text-gray-500">Aucun document financier.</td></tr>
-                                    ) : finances.map(doc => (
+                                    ) : paginatedFinances.map(doc => (
                                         <tr key={doc.id} className="hover:bg-blue-50/50 transition">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center">
@@ -540,6 +550,38 @@ function FinancesContent() {
                                 </tbody>
                             </table>
                         </div>
+                        <div className="px-6 py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
+                            <div className="flex items-center space-x-2">
+                                <span className="text-sm text-gray-500">Afficher</span>
+                                <select value={itemsPerPage} onChange={(e) => {setItemsPerPage(Number(e.target.value)); setCurrentPage(1);}} className="border border-gray-200 rounded text-sm text-gray-700 py-1 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span className="text-sm text-gray-500">par page</span>
+                            </div>
+                            <span className="text-sm text-gray-500">Affichage {totalItems === 0 ? 0 : startIndex + 1} à {Math.min(startIndex + itemsPerPage, totalItems)} sur {totalItems} documents</span>
+                            <div className="flex space-x-1">
+                                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-3 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50"><i className="fa-solid fa-chevron-left text-xs"></i></button>
+                                
+                                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                    .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                                    .map((p, i, arr) => {
+                                        const btn = <button key={p} onClick={() => setCurrentPage(p)} className={`px-3 py-1 rounded font-medium ${currentPage === p ? 'bg-blue-600 text-white' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}>{p}</button>;
+                                        if (i > 0 && arr[i - 1] !== p - 1) {
+                                            return <span key={`ellipsis-${p}`} className="flex items-center"><span className="px-2 text-gray-500">...</span>{btn}</span>;
+                                        }
+                                        return btn;
+                                    })
+                                }
+
+                                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="px-3 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50"><i className="fa-solid fa-chevron-right text-xs"></i></button>
+                            </div>
+                        </div>
+                                </>
+                            );
+                        })()}
                     </div>
                 </div>
             </main>

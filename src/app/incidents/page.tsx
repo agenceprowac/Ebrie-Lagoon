@@ -43,6 +43,9 @@ export default function IncidentsPage() {
     const [reservations, setReservations] = useState<Reservation[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [currentPageIncidents, setCurrentPageIncidents] = useState(1);
+    const [currentPageReclamations, setCurrentPageReclamations] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     // Form states
     const [numeroIncident, setNumeroIncident] = useState('');
@@ -268,6 +271,13 @@ export default function IncidentsPage() {
                                 <button className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded text-gray-600 hover:bg-gray-50"><i className="fa-solid fa-file-excel mr-1"></i> Export Excel</button>
                             </div>
                             <div className="overflow-x-auto">
+                                {(() => {
+                                    const totalItems = listIncidents.length;
+                                    const totalPages = Math.ceil(totalItems / itemsPerPage);
+                                    const startIndex = (currentPageIncidents - 1) * itemsPerPage;
+                                    const paginatedIncidents = listIncidents.slice(startIndex, startIndex + itemsPerPage);
+                                    return (
+                                        <>
                                 <table className="w-full text-left whitespace-nowrap">
                                     <thead>
                                         <tr className="bg-white text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
@@ -283,9 +293,9 @@ export default function IncidentsPage() {
                                     <tbody className="text-sm divide-y divide-gray-50">
                                         {isLoading ? (
                                             <tr><td colSpan={7} className="text-center py-6 text-gray-500">Chargement...</td></tr>
-                                        ) : listIncidents.length === 0 ? (
+                                        ) : paginatedIncidents.length === 0 ? (
                                             <tr><td colSpan={7} className="text-center py-6 text-gray-500">Aucun incident enregistré.</td></tr>
-                                        ) : listIncidents.map(inc => (
+                                        ) : paginatedIncidents.map(inc => (
                                             <tr key={inc.id} className="hover:bg-gray-50 transition">
                                                 <td className="px-4 py-3 font-bold text-gray-800">{inc.numero_incident}</td>
                                                 <td className="px-4 py-3 text-gray-500">{formatDateTime(inc.date_heure)}</td>
@@ -308,6 +318,38 @@ export default function IncidentsPage() {
                                         ))}
                                     </tbody>
                                 </table>
+                                <div className="px-6 py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4 mt-2">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-gray-500">Afficher</span>
+                                        <select value={itemsPerPage} onChange={(e) => {setItemsPerPage(Number(e.target.value)); setCurrentPageIncidents(1); setCurrentPageReclamations(1);}} className="border border-gray-200 rounded text-sm text-gray-700 py-1 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                        <span className="text-sm text-gray-500">par page</span>
+                                    </div>
+                                    <span className="text-sm text-gray-500">Affichage {totalItems === 0 ? 0 : startIndex + 1} à {Math.min(startIndex + itemsPerPage, totalItems)} sur {totalItems} incidents</span>
+                                    <div className="flex space-x-1">
+                                        <button onClick={() => setCurrentPageIncidents(p => Math.max(1, p - 1))} disabled={currentPageIncidents === 1} className="px-3 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50"><i className="fa-solid fa-chevron-left text-xs"></i></button>
+                                        
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                            .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPageIncidents) <= 1)
+                                            .map((p, i, arr) => {
+                                                const btn = <button key={p} onClick={() => setCurrentPageIncidents(p)} className={`px-3 py-1 rounded font-medium ${currentPageIncidents === p ? 'bg-blue-600 text-white' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}>{p}</button>;
+                                                if (i > 0 && arr[i - 1] !== p - 1) {
+                                                    return <span key={`ellipsis-${p}`} className="flex items-center"><span className="px-2 text-gray-500">...</span>{btn}</span>;
+                                                }
+                                                return btn;
+                                            })
+                                        }
+
+                                        <button onClick={() => setCurrentPageIncidents(p => Math.min(totalPages, p + 1))} disabled={currentPageIncidents === totalPages || totalPages === 0} className="px-3 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50"><i className="fa-solid fa-chevron-right text-xs"></i></button>
+                                    </div>
+                                </div>
+                                </>
+                            );
+                        })()}
                             </div>
                         </div>
                     </div>
@@ -320,6 +362,13 @@ export default function IncidentsPage() {
                                 <button className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded text-gray-600 hover:bg-gray-50"><i className="fa-solid fa-file-excel mr-1"></i> Export Excel</button>
                             </div>
                             <div className="overflow-x-auto">
+                                {(() => {
+                                    const totalItems = listReclamations.length;
+                                    const totalPages = Math.ceil(totalItems / itemsPerPage);
+                                    const startIndex = (currentPageReclamations - 1) * itemsPerPage;
+                                    const paginatedReclamations = listReclamations.slice(startIndex, startIndex + itemsPerPage);
+                                    return (
+                                        <>
                                 <table className="w-full text-left whitespace-nowrap">
                                     <thead>
                                         <tr className="bg-white text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
@@ -334,9 +383,9 @@ export default function IncidentsPage() {
                                     <tbody className="text-sm divide-y divide-gray-50">
                                         {isLoading ? (
                                             <tr><td colSpan={6} className="text-center py-6 text-gray-500">Chargement...</td></tr>
-                                        ) : listReclamations.length === 0 ? (
+                                        ) : paginatedReclamations.length === 0 ? (
                                             <tr><td colSpan={6} className="text-center py-6 text-gray-500">Aucune réclamation enregistrée.</td></tr>
-                                        ) : listReclamations.map(rec => (
+                                        ) : paginatedReclamations.map(rec => (
                                             <tr key={rec.id} className="hover:bg-gray-50 transition">
                                                 <td className="px-4 py-3 font-bold text-gray-800">{rec.numero_incident}</td>
                                                 <td className="px-4 py-3 text-gray-500">{formatDateTime(rec.date_heure)}</td>
@@ -354,6 +403,38 @@ export default function IncidentsPage() {
                                         ))}
                                     </tbody>
                                 </table>
+                                <div className="px-6 py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-gray-500">Afficher</span>
+                                        <select value={itemsPerPage} onChange={(e) => {setItemsPerPage(Number(e.target.value)); setCurrentPageIncidents(1); setCurrentPageReclamations(1);}} className="border border-gray-200 rounded text-sm text-gray-700 py-1 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                        <span className="text-sm text-gray-500">par page</span>
+                                    </div>
+                                    <span className="text-sm text-gray-500">Affichage {totalItems === 0 ? 0 : startIndex + 1} à {Math.min(startIndex + itemsPerPage, totalItems)} sur {totalItems} réclamations</span>
+                                    <div className="flex space-x-1">
+                                        <button onClick={() => setCurrentPageReclamations(p => Math.max(1, p - 1))} disabled={currentPageReclamations === 1} className="px-3 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50"><i className="fa-solid fa-chevron-left text-xs"></i></button>
+                                        
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                            .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPageReclamations) <= 1)
+                                            .map((p, i, arr) => {
+                                                const btn = <button key={p} onClick={() => setCurrentPageReclamations(p)} className={`px-3 py-1 rounded font-medium ${currentPageReclamations === p ? 'bg-blue-600 text-white' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}>{p}</button>;
+                                                if (i > 0 && arr[i - 1] !== p - 1) {
+                                                    return <span key={`ellipsis-${p}`} className="flex items-center"><span className="px-2 text-gray-500">...</span>{btn}</span>;
+                                                }
+                                                return btn;
+                                            })
+                                        }
+
+                                        <button onClick={() => setCurrentPageReclamations(p => Math.min(totalPages, p + 1))} disabled={currentPageReclamations === totalPages || totalPages === 0} className="px-3 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50"><i className="fa-solid fa-chevron-right text-xs"></i></button>
+                                    </div>
+                                </div>
+                                </>
+                            );
+                        })()}
                             </div>
                         </div>
                     </div>

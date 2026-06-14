@@ -22,6 +22,8 @@ export default function FlottePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isAddShipModalOpen, setIsAddShipModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(6);
 
     // Form fields
     const [nomNavire, setNomNavire] = useState('');
@@ -267,7 +269,7 @@ export default function FlottePage() {
                             ) : navires.length === 0 ? (
                                 <div className="col-span-full text-center py-10 text-gray-500">Aucun navire dans la flotte.</div>
                             ) : (
-                                navires.map(navire => (
+                                navires.slice((currentPage - 1) * itemsPerPage, (currentPage - 1) * itemsPerPage + itemsPerPage).map(navire => (
                                     <div key={navire.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-md transition">
                                         <div className="h-48 bg-gray-200 relative overflow-hidden">
                                             <div className={`absolute inset-0 opacity-80 group-hover:scale-105 transition duration-500 ${navire.statut === 'Maintenance' ? 'bg-gradient-to-br from-gray-600 to-gray-800 grayscale' : navire.statut === 'En Course' ? 'bg-gradient-to-br from-indigo-500 to-purple-600' : 'bg-gradient-to-br from-blue-400 to-cyan-600'}`}></div>
@@ -307,6 +309,36 @@ export default function FlottePage() {
                                 ))
                             )}
                         </div>
+                        {navires.length > 0 && (
+                            <div className="px-6 py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4 mt-6 bg-white rounded-2xl shadow-sm">
+                                <div className="flex items-center space-x-2">
+                                    <span className="text-sm text-gray-500">Afficher</span>
+                                    <select value={itemsPerPage} onChange={(e) => {setItemsPerPage(Number(e.target.value)); setCurrentPage(1);}} className="border border-gray-200 rounded text-sm text-gray-700 py-1 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="6">6</option>
+                                        <option value="12">12</option>
+                                        <option value="24">24</option>
+                                    </select>
+                                    <span className="text-sm text-gray-500">par page</span>
+                                </div>
+                                <span className="text-sm text-gray-500">Affichage {navires.length === 0 ? 0 : ((currentPage - 1) * itemsPerPage) + 1} à {Math.min(((currentPage - 1) * itemsPerPage) + itemsPerPage, navires.length)} sur {navires.length} navires</span>
+                                <div className="flex space-x-1">
+                                    <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-3 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50"><i className="fa-solid fa-chevron-left text-xs"></i></button>
+                                    
+                                    {Array.from({ length: Math.ceil(navires.length / itemsPerPage) }, (_, i) => i + 1)
+                                        .filter(p => p === 1 || p === Math.ceil(navires.length / itemsPerPage) || Math.abs(p - currentPage) <= 1)
+                                        .map((p, i, arr) => {
+                                            const btn = <button key={p} onClick={() => setCurrentPage(p)} className={`px-3 py-1 rounded font-medium ${currentPage === p ? 'bg-blue-600 text-white' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}>{p}</button>;
+                                            if (i > 0 && arr[i - 1] !== p - 1) {
+                                                return <span key={`ellipsis-${p}`} className="flex items-center"><span className="px-2 text-gray-500">...</span>{btn}</span>;
+                                            }
+                                            return btn;
+                                        })
+                                    }
+
+                                    <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(navires.length / itemsPerPage), p + 1))} disabled={currentPage === Math.ceil(navires.length / itemsPerPage) || Math.ceil(navires.length / itemsPerPage) === 0} className="px-3 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50"><i className="fa-solid fa-chevron-right text-xs"></i></button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>

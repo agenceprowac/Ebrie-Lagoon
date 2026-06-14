@@ -24,6 +24,8 @@ export default function ClientsPage() {
     const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
     const [editingClientId, setEditingClientId] = useState<string | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const handleViewClient = async (client: any) => {
         setSelectedClient(client);
@@ -277,6 +279,13 @@ export default function ClientsPage() {
                     </div>
                 </div>
                 <div className="overflow-x-auto">
+                    {(() => {
+                        const totalItems = clients.length;
+                        const totalPages = Math.ceil(totalItems / itemsPerPage);
+                        const startIndex = (currentPage - 1) * itemsPerPage;
+                        const paginatedClients = clients.slice(startIndex, startIndex + itemsPerPage);
+                        return (
+                            <>
                     <table className="w-full text-left border-collapse whitespace-nowrap">
                         <thead>
                             <tr className="bg-white text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
@@ -290,14 +299,14 @@ export default function ClientsPage() {
                             </tr>
                         </thead>
                         <tbody className="text-sm divide-y divide-gray-50">
-                            {clients.length === 0 ? (
+                            {paginatedClients.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                                         Aucun client enregistré.
                                     </td>
                                 </tr>
                             ) : (
-                                clients.map((client: any) => (
+                                paginatedClients.map((client: any) => (
                                     <tr key={client.id} className="hover:bg-gray-50 transition group">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center">
@@ -344,17 +353,38 @@ export default function ClientsPage() {
                             )}
                         </tbody>
                     </table>
-                </div>
-                
-                <div className="p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Affichage de `${clients.length > 0 ? 1 : 0}` à `${clients.length}` sur `${clients.length}` clients</span>
-                    <div className="flex space-x-1">
-                        <button className="px-3 py-1 border border-gray-200 rounded text-gray-500 bg-white hover:bg-gray-50 disabled:opacity-50" disabled>Précédent</button>
-                        <button className="px-3 py-1 border border-blue-500 rounded text-white bg-blue-600">1</button>
-                        <button className="px-3 py-1 border border-gray-200 rounded text-gray-700 bg-white hover:bg-gray-50">2</button>
-                        <button className="px-3 py-1 border border-gray-200 rounded text-gray-700 bg-white hover:bg-gray-50">3</button>
-                        <button className="px-3 py-1 border border-gray-200 rounded text-gray-700 bg-white hover:bg-gray-50">Suivant</button>
-                    </div>
+                            <div className="px-6 py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4 mt-2">
+                                <div className="flex items-center space-x-2">
+                                    <span className="text-sm text-gray-500">Afficher</span>
+                                    <select value={itemsPerPage} onChange={(e) => {setItemsPerPage(Number(e.target.value)); setCurrentPage(1);}} className="border border-gray-200 rounded text-sm text-gray-700 py-1 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                    <span className="text-sm text-gray-500">par page</span>
+                                </div>
+                                <span className="text-sm text-gray-500">Affichage {totalItems === 0 ? 0 : startIndex + 1} à {Math.min(startIndex + itemsPerPage, totalItems)} sur {totalItems} clients</span>
+                                <div className="flex space-x-1">
+                                    <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-3 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50"><i className="fa-solid fa-chevron-left text-xs"></i></button>
+                                    
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                        .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                                        .map((p, i, arr) => {
+                                            const btn = <button key={p} onClick={() => setCurrentPage(p)} className={`px-3 py-1 rounded font-medium ${currentPage === p ? 'bg-blue-600 text-white' : 'border border-gray-200 text-gray-700 hover:bg-gray-50'}`}>{p}</button>;
+                                            if (i > 0 && arr[i - 1] !== p - 1) {
+                                                return <span key={`ellipsis-${p}`} className="flex items-center"><span className="px-2 text-gray-500">...</span>{btn}</span>;
+                                            }
+                                            return btn;
+                                        })
+                                    }
+
+                                    <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="px-3 py-1 rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50"><i className="fa-solid fa-chevron-right text-xs"></i></button>
+                                </div>
+                            </div>
+                            </>
+                        );
+                    })()}
                 </div>
             </div>
 
