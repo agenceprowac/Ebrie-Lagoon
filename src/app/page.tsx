@@ -8,6 +8,20 @@ import { Sidebar } from '@/components/Sidebar';
 
 export default function Dashboard() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [currentUserName, setCurrentUserName] = useState('Chargement...');
+
+    useEffect(() => {
+        const currentUserStr = localStorage.getItem('currentUser');
+        if (currentUserStr) {
+            try {
+                setCurrentUserName(JSON.parse(currentUserStr).name);
+            } catch (e) {
+                setCurrentUserName('Administrateur');
+            }
+        } else {
+            setCurrentUserName('Administrateur');
+        }
+    }, []);
     const revChartRef = useRef<HTMLCanvasElement>(null);
     const canalChartRef = useRef<HTMLCanvasElement>(null);
 
@@ -179,7 +193,7 @@ export default function Dashboard() {
                             <div className="flex items-center space-x-3 border-l pl-4 border-gray-200 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
                                 <img src="https://ui-avatars.com/api/?name=Lionel+Vithiano&background=0D8ABC&color=fff" alt="User" className="w-9 h-9 rounded-full shadow-sm" />
                                 <div className="hidden md:block text-sm">
-                                    <p className="font-semibold text-gray-700">M. Lionel Vithiano</p>
+                                    <p className="font-semibold text-gray-700">{currentUserName}</p>
                                     <p className="text-xs text-gray-500">Administrateur</p>
                                 </div>
                             </div>

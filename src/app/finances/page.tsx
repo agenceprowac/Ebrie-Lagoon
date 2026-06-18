@@ -55,6 +55,20 @@ function FinancesContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [currentUserName, setCurrentUserName] = useState('Chargement...');
+
+    useEffect(() => {
+        const currentUserStr = localStorage.getItem('currentUser');
+        if (currentUserStr) {
+            try {
+                setCurrentUserName(JSON.parse(currentUserStr).name);
+            } catch (e) {
+                setCurrentUserName('Administrateur');
+            }
+        } else {
+            setCurrentUserName('Administrateur');
+        }
+    }, []);
     const [activeTab, setActiveTab] = useState('all');
     const [isGeneratorModalOpen, setIsGeneratorModalOpen] = useState(false);
 
@@ -86,6 +100,8 @@ function FinancesContent() {
     const [optQty, setOptQty] = useState(1);
     const [acompte, setAcompte] = useState(0);
     const [selectedOptions, setSelectedOptions] = useState<any>({});
+    const [createdBy, setCreatedBy] = useState('');
+    const [updatedBy, setUpdatedBy] = useState('');
 
     const totalHT = (packPrice * packQty) + (optPrice * optQty);
     const tva = 0; // 0%
@@ -180,6 +196,9 @@ function FinancesContent() {
 
         const finalDocType = acompte > 0 ? 'Facture' : 'Devis';
         const finalStatut = acompte >= totalTTC ? 'Soldée' : (acompte > 0 ? 'Acompte payé' : 'En attente');
+        
+        const currentUserStr = localStorage.getItem('currentUser');
+        const currentUserName = currentUserStr ? JSON.parse(currentUserStr).name : 'Système';
 
         let payload: any = {
             type_document: finalDocType,
@@ -191,13 +210,16 @@ function FinancesContent() {
             tva: tva,
             total_ttc: totalTTC,
             acompte: acompte,
-            reste_a_payer: resteAPayer
+            reste_a_payer: resteAPayer,
+            updated_by_name: currentUserName,
+                        updated_at: new Date().toISOString()
         };
 
         if (!editingDocId) {
             const randomNum = Math.floor(1000 + Math.random() * 9000);
             const prefix = finalDocType === 'Facture' ? 'FACT' : 'DEV';
             payload.numero_document = `${prefix}-${randomNum}`;
+            payload.created_by_name = currentUserName;
         } else {
             const doc = finances.find(f => f.id === editingDocId);
             if (doc) {
@@ -261,6 +283,8 @@ function FinancesContent() {
             setOptQty(1);
             setAcompte(0);
             setSelectedOptions({});
+            setCreatedBy('');
+            setUpdatedBy('');
             setNotificationModal({ isOpen: true, type: 'success', message: docType + " enregistré avec succès !" });
         }
         setIsSubmitting(false);
@@ -273,6 +297,8 @@ function FinancesContent() {
         setReservationId(doc.reservation_id || '');
         setDateEmission(new Date(doc.date_creation).toISOString().split('T')[0]);
         setAcompte(doc.acompte || 0);
+        setCreatedBy((doc as any).created_by_name || '');
+        setUpdatedBy((doc as any).updated_by_name || '');
         setIsGeneratorModalOpen(true);
     };
 
@@ -364,7 +390,7 @@ function FinancesContent() {
                             <div className="flex items-center space-x-3 border-l pl-4 border-gray-200 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
                                 <img src="https://ui-avatars.com/api/?name=Lionel+Vithiano&background=0D8ABC&color=fff" alt="User" className="w-9 h-9 rounded-full shadow-sm" />
                                 <div className="hidden md:block text-sm">
-                                    <p className="font-semibold text-gray-700">M. Lionel Vithiano</p>
+                                    <p className="font-semibold text-gray-700">{currentUserName}</p>
                                     <p className="text-xs text-gray-500">Administrateur</p>
                                 </div>
                             </div>
@@ -375,10 +401,24 @@ function FinancesContent() {
                 <div className="p-6 lg:p-8 space-y-6">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-800">Finances & Facturation</h2>
-                            <p className="text-sm text-gray-500">Gérez vos devis, factures et encaissements</p>
+                            <h2 className="text-2xl font-bold text-gray-800">Gestion Financière</h2>
+                            <p className="text-sm text-gray-500">Devis et Facturations</p>
                         </div>
-                        <button onClick={() => setIsGeneratorModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl shadow-md transition transform hover:-translate-y-0.5 text-sm font-medium flex items-center">
+                        <button onClick={() => {
+                            setEditingDocId(null);
+                            setDocType('Devis');
+                            setClientId('');
+                            setReservationId('');
+                            setPackPrice(0);
+                            setPackQty(1);
+                            setOptPrice(0);
+                            setOptQty(1);
+                            setAcompte(0);
+                            setSelectedOptions({});
+                            setCreatedBy('');
+                            setUpdatedBy('');
+                            setIsGeneratorModalOpen(true);
+                        }} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl shadow-md transition transform hover:-translate-y-0.5 text-sm font-medium flex items-center">
                             <i className="fa-solid fa-plus mr-2"></i> Nouveau Document
                         </button>
                     </div>
@@ -490,15 +530,16 @@ function FinancesContent() {
                                         <th className="px-6 py-4 font-medium">Réf. Résa</th>
                                         <th className="px-6 py-4 font-medium text-right">Total</th>
                                         <th className="px-6 py-4 font-medium text-right">Reste à payer</th>
+                                        <th className="px-6 py-4 font-medium">Créé/Modifié par</th>
                                         <th className="px-6 py-4 font-medium">Statut</th>
                                         <th className="px-6 py-4 font-medium text-center">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm divide-y divide-gray-100">
                                     {isLoading ? (
-                                        <tr><td colSpan={7} className="text-center py-6 text-gray-500">Chargement...</td></tr>
+                                        <tr><td colSpan={9} className="text-center py-6 text-gray-500">Chargement...</td></tr>
                                     ) : paginatedFinances.length === 0 ? (
-                                        <tr><td colSpan={7} className="text-center py-6 text-gray-500">Aucun document financier.</td></tr>
+                                        <tr><td colSpan={9} className="text-center py-6 text-gray-500">Aucun document financier.</td></tr>
                                     ) : paginatedFinances.map(doc => (
                                         <tr key={doc.id} className="hover:bg-blue-50/50 transition">
                                             <td className="px-6 py-4">
@@ -519,6 +560,9 @@ function FinancesContent() {
                                             <td className="px-6 py-4 text-gray-600">{doc.reservations?.numero_reference || '-'}</td>
                                             <td className="px-6 py-4 text-right font-bold text-gray-800">{formatCurrency(doc.total_ttc)}</td>
                                             <td className={`px-6 py-4 text-right font-medium ${doc.reste_a_payer > 0 ? 'text-red-500' : 'text-gray-500'}`}>{formatCurrency(doc.reste_a_payer)}</td>
+                                            <td className="px-6 py-4 text-gray-500 text-xs">
+                                                <div><div className="font-medium text-gray-700">{(doc as any).updated_by_name || (doc as any).created_by_name || 'Système'}</div><div className="text-[10px] mt-0.5">{new Date((doc as any).updated_at || (doc as any).created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}</div></div>
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center space-x-2">
                                                     <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${doc.statut === 'Soldée' ? 'bg-green-100 text-green-700 border-green-200' : doc.statut === 'Acompte payé' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'bg-orange-100 text-orange-700 border-orange-200'}`}>
@@ -755,10 +799,15 @@ function FinancesContent() {
                                 </div>
                             </div>
                         </div>
-                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-between space-x-3 rounded-b-2xl">
-                            <button onClick={() => window.print()} className="px-5 py-2.5 rounded-lg text-sm font-bold bg-gray-800 text-white hover:bg-gray-900 transition shadow-md flex items-center">
-                                <i className="fa-solid fa-print mr-2"></i> Prévisualiser & Imprimer
-                            </button>
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-between items-center rounded-b-2xl">
+                            <div className="text-xs text-gray-500">
+                                {editingDocId && (createdBy || updatedBy) && (
+                                    <>
+                                        {createdBy && <div>Créé par : <span className="font-semibold text-gray-700">{createdBy}</span></div>}
+                                        {updatedBy && <div>Modifié par : <span className="font-semibold text-gray-700">{updatedBy}</span></div>}
+                                    </>
+                                )}
+                            </div>
                             <div className="space-x-3">
                                 <button onClick={() => setIsGeneratorModalOpen(false)} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Annuler</button>
                                 <button onClick={handleSaveDocument} disabled={isSubmitting} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-md disabled:opacity-50">

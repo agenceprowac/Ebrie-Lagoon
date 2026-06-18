@@ -16,6 +16,20 @@ type Navire = {
 
 export default function FlottePage() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [currentUserName, setCurrentUserName] = useState('Chargement...');
+
+    useEffect(() => {
+        const currentUserStr = localStorage.getItem('currentUser');
+        if (currentUserStr) {
+            try {
+                setCurrentUserName(JSON.parse(currentUserStr).name);
+            } catch (e) {
+                setCurrentUserName('Administrateur');
+            }
+        } else {
+            setCurrentUserName('Administrateur');
+        }
+    }, []);
     const [activeTab, setActiveTab] = useState('all');
     
     // Supabase states
@@ -64,13 +78,19 @@ export default function FlottePage() {
 
     const handleAddNavire = async () => {
         if (!nomNavire || !typeNavire || !capacite) return alert('Veuillez remplir les champs obligatoires.');
+        const currentUserStr = localStorage.getItem('currentUser');
+        const currentUserName = currentUserStr ? JSON.parse(currentUserStr).name : 'Système';
+
         setIsSubmitting(true);
         const { data, error } = await supabase.from('flotte').insert([{
             nom_navire: nomNavire,
             type_navire: typeNavire,
             capacite,
             moteur,
-            statut
+            statut,
+            created_by_name: currentUserName,
+            updated_by_name: currentUserName,
+                        updated_at: new Date().toISOString()
         }]).select();
         
         if (error) {
@@ -143,7 +163,7 @@ export default function FlottePage() {
                             <div className="flex items-center space-x-3 border-l pl-4 border-gray-200 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
                                 <img src="https://ui-avatars.com/api/?name=Lionel+Vithiano&background=0D8ABC&color=fff" alt="User" className="w-9 h-9 rounded-full shadow-sm" />
                                 <div className="hidden md:block text-sm">
-                                    <p className="font-semibold text-gray-700">M. Lionel Vithiano</p>
+                                    <p className="font-semibold text-gray-700">{currentUserName}</p>
                                     <p className="text-xs text-gray-500">Administrateur</p>
                                 </div>
                             </div>
@@ -243,6 +263,10 @@ export default function FlottePage() {
                                                 <div>
                                                     <p className="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Type</p>
                                                     <p className="text-gray-800 font-medium">{navire.type_navire}</p>
+                                                </div>
+                                                <div className="col-span-2 mt-2">
+                                                    <p className="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Créé/Modifié par</p>
+                                                    <p className="text-gray-800 font-medium text-xs"><span><span className="block">{(navire as any).updated_by_name || (navire as any).created_by_name || 'Système'}</span><span className="block text-[10px] text-gray-500 font-normal mt-0.5">{new Date((navire as any).updated_at || (navire as any).created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}</span></span></p>
                                                 </div>
                                                 {navire.statut === 'Maintenance' && (
                                                     <div className="col-span-2 mt-2">

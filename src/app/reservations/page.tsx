@@ -20,6 +20,20 @@ export default function ReservationsPage() {
 
     // Nouveaux états UX
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [currentUserName, setCurrentUserName] = useState('Chargement...');
+
+    useEffect(() => {
+        const currentUserStr = localStorage.getItem('currentUser');
+        if (currentUserStr) {
+            try {
+                setCurrentUserName(JSON.parse(currentUserStr).name);
+            } catch (e) {
+                setCurrentUserName('Administrateur');
+            }
+        } else {
+            setCurrentUserName('Administrateur');
+        }
+    }, []);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -45,6 +59,8 @@ export default function ReservationsPage() {
     
     const [packPrice, setPackPrice] = useState(0);
     const [packType, setPackType] = useState('');
+    const [createdBy, setCreatedBy] = useState('');
+    const [updatedBy, setUpdatedBy] = useState('');
     const [optionsPrice, setOptionsPrice] = useState(0);
     const [optionsList, setOptionsList] = useState<any>({});
     const [totalMontant, setTotalMontant] = useState(0);
@@ -149,6 +165,9 @@ export default function ReservationsPage() {
 
     const handleSaveReservation = async () => {
         try {
+            const currentUserStr = localStorage.getItem('currentUser');
+            const currentUserName = currentUserStr ? JSON.parse(currentUserStr).name : 'Système';
+            
             let finalClientId = clientId;
             // 1. Create Client if not exists
             if (!finalClientId) {
@@ -190,7 +209,9 @@ export default function ReservationsPage() {
                         montant_total: totalMontant,
                         statut: finalReservationStatus,
                         options: optionsList,
-                        acompte: acompte
+                        acompte: acompte,
+                        updated_by_name: currentUserName,
+                        updated_at: new Date().toISOString()
                     })
                     .eq('numero_reference', editingReservationId)
                     .select()
@@ -212,7 +233,10 @@ export default function ReservationsPage() {
                         montant_total: totalMontant,
                         statut: finalReservationStatus,
                         options: optionsList,
-                        acompte: acompte
+                        acompte: acompte,
+                        created_by_name: currentUserName,
+                        updated_by_name: currentUserName,
+                        updated_at: new Date().toISOString()
                     }])
                     .select()
                     .single();
@@ -236,7 +260,9 @@ export default function ReservationsPage() {
                     reste_a_payer: totalMontant - acompte,
                     client_id: finalClientId,
                     reservation_id: actualResId,
-                    date_creation: new Date().toISOString()
+                    date_creation: new Date().toISOString(),
+                    updated_by_name: currentUserName,
+                        updated_at: new Date().toISOString()
                 };
 
                 if (finData) {
@@ -248,10 +274,8 @@ export default function ReservationsPage() {
                     }
                     await supabase.from('finances').update({ ...financePayload, numero_document: numDoc }).eq('id', finData.id);
                 } else {
-                    await supabase.from('finances').insert([{
-                        numero_document: (acompte > 0 ? 'FACT-' : 'DEV-') + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-                        ...financePayload
-                    }]);
+                    const numDoc = (acompte > 0 ? 'FACT-' : 'DEV-') + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                    await supabase.from('finances').insert([{ ...financePayload, numero_document: numDoc, created_by_name: currentUserName }]);
                 }
             }
 
@@ -291,6 +315,8 @@ export default function ReservationsPage() {
         setClientPhone(r.clients?.telephone || '');
         setClientEmail(r.clients?.email || '');
         setClientOrigine(r.clients?.origine_contact || 'WhatsApp');
+        setCreatedBy(r.created_by_name || '');
+        setUpdatedBy(r.updated_by_name || '');
         
         setDatePrestation(r.date_prestation || '');
         setHeureDebut(r.heure_debut ? r.heure_debut.substring(0, 5) : '');
@@ -340,6 +366,8 @@ export default function ReservationsPage() {
         setClientPhone('');
         setClientEmail('');
         setClientOrigine('WhatsApp');
+        setCreatedBy('');
+        setUpdatedBy('');
         setDatePrestation('');
         setHeureDebut('');
         setNbPersonnes(1);
@@ -427,7 +455,7 @@ export default function ReservationsPage() {
                     <div className="flex items-center space-x-3 border-l pl-4 border-gray-200 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
                         <img src="https://ui-avatars.com/api/?name=Lionel+Vithiano&background=0D8ABC&color=fff" alt="User" className="w-9 h-9 rounded-full shadow-sm" />
                         <div className="hidden md:block text-sm">
-                            <p className="font-semibold text-gray-700">M. Lionel Vithiano</p>
+                            <p className="font-semibold text-gray-700">{currentUserName}</p>
                             <p className="text-xs text-gray-500">Administrateur</p>
                         </div>
                     </div>
@@ -497,6 +525,7 @@ export default function ReservationsPage() {
                                 <th className="px-6 py-4 font-medium">Client & Contact</th>
                                 <th className="px-6 py-4 font-medium">Prestation (Date & Heure)</th>
                                 <th className="px-6 py-4 font-medium">Partenaire / Bateau</th>
+                                <th className="px-6 py-4 font-medium">Créé/Modifié par</th>
                                 <th className="px-6 py-4 font-medium">Statut</th>
                                 <th className="px-6 py-4 font-medium text-right">Montant (FCFA)</th>
                                 <th className="px-6 py-4 font-medium text-center">Actions</th>
@@ -528,6 +557,9 @@ export default function ReservationsPage() {
                                     {res.prestDetails && <div className="text-xs text-gray-500 mt-0.5"><i className="fa-regular fa-clock mr-1"></i>{res.prestDetails}</div>}
                                 </td>
                                 <td className="px-6 py-4 text-gray-600">{res.bateau}</td>
+                                <td className="px-6 py-4 text-gray-500 text-xs">
+                                    <div><div className="font-medium text-gray-700">{res.raw?.updated_by_name || res.raw?.created_by_name || 'Système'}</div><div className="text-[10px] mt-0.5">{new Date(res.raw?.updated_at || res.raw?.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}</div></div>
+                                </td>
                                 <td className="px-6 py-4">
                                     <span className={"px-3 py-1 rounded-full text-xs font-semibold border " + res.statutColor}>{res.statut}</span>
                                 </td>
@@ -735,9 +767,21 @@ export default function ReservationsPage() {
             </div>
             
             
-            <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3">
-                <button onClick={() => setIsReservationModalOpen(!isReservationModalOpen)} className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-200 transition">Annuler</button>
-                <button disabled={packPrice === 0 || clientName.trim() === '' || clientPhone.trim() === '' || datePrestation === '' || heureDebut === ''} onClick={handleSaveReservation} className="px-5 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed">Enregistrer la réservation</button>
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-between items-center bg-gray-50 rounded-b-2xl">
+                <div className="text-xs text-gray-500">
+                    {editingReservationId && (createdBy || updatedBy) && (
+                        <>
+                            {createdBy && <div>Créé par : <span className="font-semibold text-gray-700">{createdBy}</span></div>}
+                            {updatedBy && <div>Modifié par : <span className="font-semibold text-gray-700">{updatedBy}</span></div>}
+                        </>
+                    )}
+                </div>
+                <div className="flex space-x-3">
+                    <button onClick={() => setIsReservationModalOpen(false)} className="px-5 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition shadow-sm">Annuler</button>
+                    <button disabled={packPrice === 0 || clientName.trim() === '' || clientPhone.trim() === '' || datePrestation === '' || heureDebut === ''} onClick={handleSaveReservation} className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition shadow-md flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i className="fa-solid fa-save mr-2"></i> Enregistrer
+                    </button>
+                </div>
             </div>
         </div>
     </div>

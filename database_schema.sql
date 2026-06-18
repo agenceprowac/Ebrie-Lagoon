@@ -38,7 +38,10 @@ CREATE TABLE IF NOT EXISTS public.flotte (
     moteur TEXT,
     statut TEXT NOT NULL DEFAULT 'Disponible' CHECK (statut IN ('Disponible', 'En Course', 'Maintenance')),
     raison_immobilisation TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_by_name TEXT,
+    updated_by_name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 4. Table Clients
@@ -82,7 +85,10 @@ CREATE TABLE IF NOT EXISTS public.reservations (
     options JSONB DEFAULT '{}'::JSONB, -- Ex: {"deco": true, "dj": false}
     montant_total NUMERIC(15, 2) DEFAULT 0.00,
     acompte NUMERIC(15, 2) DEFAULT 0.00,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_by_name TEXT,
+    updated_by_name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 7. Table Finances (Devis & Factures)
@@ -100,7 +106,10 @@ CREATE TABLE IF NOT EXISTS public.finances (
     total_ttc NUMERIC(15, 2) NOT NULL DEFAULT 0.00,
     acompte NUMERIC(15, 2) NOT NULL DEFAULT 0.00,
     reste_a_payer NUMERIC(15, 2) NOT NULL DEFAULT 0.00,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_by_name TEXT,
+    updated_by_name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 8. Table Incidents & Réclamations
@@ -116,7 +125,10 @@ CREATE TABLE IF NOT EXISTS public.incidents (
     mesures_immediates TEXT,
     statut TEXT NOT NULL DEFAULT 'En traitement' CHECK (statut IN ('En traitement', 'Analyse interne', 'Clôturé')),
     type_declaration TEXT NOT NULL DEFAULT 'Incident' CHECK (type_declaration IN ('Incident', 'Réclamation')),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_by_name TEXT,
+    updated_by_name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- ==========================================
