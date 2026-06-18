@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useState, useEffect, Suspense } from 'react';
 import { supabase } from '@/utils/supabase';
+import { Sidebar } from '@/components/Sidebar';
 
 type Finance = {
     id: string;
@@ -70,6 +71,9 @@ function FinancesContent() {
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     // Form
     const [docType, setDocType] = useState('Devis');
@@ -88,9 +92,14 @@ function FinancesContent() {
     const totalTTC = totalHT + tva;
     const resteAPayer = totalTTC - acompte;
 
+    const [logoUrl, setLogoUrl] = useState<string | null>(null);
+    const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
+
     useEffect(() => {
         fetchData();
         setDateEmission(new Date().toISOString().split('T')[0]);
+        setLogoUrl(localStorage.getItem('ebrie_logo'));
+        setSignatureUrl(localStorage.getItem('ebrie_sig'));
     }, []);
 
     useEffect(() => {
@@ -333,57 +342,7 @@ function FinancesContent() {
 
     return (
         <div className="flex h-screen overflow-hidden text-gray-800 bg-slate-50 font-sans">
-            {/* Overlay mobile */}
-            {isSidebarOpen && (
-                <div className="fixed inset-0 bg-gray-900/50 z-40 md:hidden" onClick={() => setIsSidebarOpen(false)}></div>
-            )}
-            <aside className={"w-64 bg-white shadow-xl flex flex-col z-50 fixed inset-y-0 left-0 transform " + (isSidebarOpen ? "translate-x-0" : "-translate-x-full") + " md:relative md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0"}>
-                <button onClick={() => setIsSidebarOpen(false)} className="absolute right-4 top-4 md:hidden text-gray-400 hover:text-gray-600 z-50">
-                    <i className="fa-solid fa-times text-xl"></i>
-                </button>
-                <div className="p-6 flex items-center justify-center border-b border-gray-100">
-                    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg mr-3">
-                        <i className="fa-solid fa-water"></i>
-                    </div>
-                    <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500">
-                        Ebrié Lagoon
-                    </h1>
-                </div>
-                <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
-                    <div className="px-2 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Principal</div>
-                    <a href="/" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
-                        <i className="fa-solid fa-chart-pie w-6"></i> Tableau de bord
-                    </a>
-                    <a href="/reservations" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
-                        <i className="fa-solid fa-calendar-check w-6"></i> Réservations
-                    </a>
-                    <a href="/finances" className="sidebar-item active flex items-center px-4 py-3 text-sm font-medium">
-                        <i className="fa-solid fa-file-invoice-dollar w-6"></i> Finances & Devis
-                    </a>
-                    <a href="/flotte" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
-                        <i className="fa-solid fa-ship w-6"></i> Flotte & Opérations
-                    </a>
-                    <a href="/incidents" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
-                        <i className="fa-solid fa-triangle-exclamation w-6"></i> Incidents
-                    </a>
-                    <a href="/partenaires" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
-                        <i className="fa-solid fa-handshake w-6"></i> Partenaires
-                    </a>
-                    
-                    <div className="px-2 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Administration</div>
-                    <a href="/clients" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
-                        <i className="fa-solid fa-users w-6"></i> Clients
-                    </a>
-                    <a href="/parametres" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
-                        <i className="fa-solid fa-gear w-6"></i> Paramètres
-                    </a>
-                </nav>
-                <div className="p-4 border-t border-gray-100">
-                    <button className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:text-red-600 transition">
-                        <i className="fa-solid fa-sign-out-alt w-6"></i> Déconnexion
-                    </button>
-                </div>
-            </aside>
+            <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
             <main className="flex-1 flex flex-col h-screen overflow-y-auto bg-slate-50 relative">
                 <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 sticky top-0 z-20">
@@ -455,10 +414,68 @@ function FinancesContent() {
                     </div>
 
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 items-center justify-between bg-gray-50">
+                            <div className="flex items-center bg-white border border-gray-200 rounded-lg px-3 py-2 w-full md:w-80 focus-within:ring-2 focus-within:ring-blue-400 transition shadow-sm">
+                                <i className="fa-solid fa-search text-gray-400"></i>
+                                <input 
+                                    type="text" 
+                                    placeholder="Rechercher (N°, Client, Résa)..." 
+                                    className="bg-transparent border-none outline-none ml-2 w-full text-sm" 
+                                    value={searchQuery}
+                                    onChange={(e) => {setSearchQuery(e.target.value); setCurrentPage(1);}}
+                                />
+                            </div>
+                            <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                                <div className="flex items-center bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm w-full sm:w-auto">
+                                    <i className="fa-regular fa-calendar text-gray-400 mr-2"></i>
+                                    <span className="text-xs text-gray-500 mr-2 font-medium">Du</span>
+                                    <input 
+                                        type="date" 
+                                        className="text-sm outline-none bg-transparent text-gray-700" 
+                                        value={startDate}
+                                        onChange={(e) => {setStartDate(e.target.value); setCurrentPage(1);}}
+                                    />
+                                </div>
+                                <div className="flex items-center bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm w-full sm:w-auto">
+                                    <i className="fa-regular fa-calendar text-gray-400 mr-2"></i>
+                                    <span className="text-xs text-gray-500 mr-2 font-medium">Au</span>
+                                    <input 
+                                        type="date" 
+                                        className="text-sm outline-none bg-transparent text-gray-700"
+                                        value={endDate}
+                                        onChange={(e) => {setEndDate(e.target.value); setCurrentPage(1);}}
+                                    />
+                                </div>
+                                {(searchQuery || startDate || endDate) && (
+                                    <button 
+                                        onClick={() => {setSearchQuery(''); setStartDate(''); setEndDate(''); setCurrentPage(1);}}
+                                        className="text-xs text-gray-500 hover:text-red-500 underline transition whitespace-nowrap"
+                                    >
+                                        Effacer les filtres
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                         {(() => {
-                            const filteredFinances = finances.filter(f => activeTab === 'all' || f.type_document === activeTab);
+                            let filteredFinances = finances.filter(f => activeTab === 'all' || f.type_document === activeTab);
+                            
+                            if (startDate) {
+                                filteredFinances = filteredFinances.filter(f => f.date_creation >= startDate);
+                            }
+                            if (endDate) {
+                                filteredFinances = filteredFinances.filter(f => f.date_creation <= endDate);
+                            }
+                            if (searchQuery) {
+                                const q = searchQuery.toLowerCase();
+                                filteredFinances = filteredFinances.filter(f => 
+                                    f.numero_document.toLowerCase().includes(q) ||
+                                    (f.clients?.nom && f.clients.nom.toLowerCase().includes(q)) ||
+                                    (f.reservations?.numero_reference && f.reservations.numero_reference.toLowerCase().includes(q))
+                                );
+                            }
+
                             const totalItems = filteredFinances.length;
-                            const totalPages = Math.ceil(totalItems / itemsPerPage);
+                            const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
                             const startIndex = (currentPage - 1) * itemsPerPage;
                             const paginatedFinances = filteredFinances.slice(startIndex, startIndex + itemsPerPage);
                             return (
@@ -888,7 +905,11 @@ function FinancesContent() {
                 {/* Header de la facture/devis */}
                 <div className="flex justify-between items-start border-b-2 border-gray-800 pb-6 mb-8">
                     <div>
-                        <h1 className="text-4xl font-black text-gray-900 tracking-wider">EBRIÉ LAGOON</h1>
+                        {logoUrl ? (
+                            <img src={logoUrl} alt="EBRIÉ LAGOON" className="h-16 mb-2 object-contain" />
+                        ) : (
+                            <h1 className="text-4xl font-black text-gray-900 tracking-wider">EBRIÉ LAGOON</h1>
+                        )}
                         <p className="text-gray-600 mt-2 text-sm font-medium">Zone 4, Abidjan, Côte d'Ivoire</p>
                         <p className="text-gray-600 text-sm font-medium">contact@ebrielagoon.com</p>
                         <p className="text-gray-600 text-sm font-medium">+225 07 00 11 22 33</p>
@@ -1014,8 +1035,12 @@ function FinancesContent() {
                             <p>Le paiement doit être effectué dans un délai de 15 jours à compter de la date d'émission. En cas de retard, des pénalités pourront être appliquées conformément aux conditions générales de vente.</p>
                         </div>
                         <div className="text-center w-1/3">
-                            <p className="font-bold text-gray-800 mb-12">La Direction</p>
-                            <div className="border-b-2 border-gray-400 w-3/4 mx-auto"></div>
+                            <p className="font-bold text-gray-800 mb-2">La Direction</p>
+                            {signatureUrl ? (
+                                <img src={signatureUrl} alt="Signature" className="h-16 mx-auto object-contain" />
+                            ) : (
+                                <div className="h-16 border-b-2 border-gray-400 w-3/4 mx-auto"></div>
+                            )}
                         </div>
                     </div>
                 </div>

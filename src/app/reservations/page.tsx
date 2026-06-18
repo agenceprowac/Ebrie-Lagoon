@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
-
+import { Sidebar } from '@/components/Sidebar';
 
 
 export default function ReservationsPage() {
@@ -34,6 +34,10 @@ export default function ReservationsPage() {
     const [datePrestation, setDatePrestation] = useState('');
     const [heureDebut, setHeureDebut] = useState('');
     const [nbPersonnes, setNbPersonnes] = useState(1);
+    const [clientEmail, setClientEmail] = useState('');
+    const [clientOrigine, setClientOrigine] = useState('WhatsApp');
+    const [navireId, setNavireId] = useState('');
+    const [flotteList, setFlotteList] = useState<any[]>([]);
     
     // Nouveaux états Édition et Statut
     const [editingReservationId, setEditingReservationId] = useState<string | null>(null);
@@ -46,6 +50,9 @@ export default function ReservationsPage() {
     const [totalMontant, setTotalMontant] = useState(0);
     const [acompte, setAcompte] = useState(0);
     const [modePaiement, setModePaiement] = useState('');
+
+    const [availablePacks, setAvailablePacks] = useState<any[]>([]);
+    const [availableOptions, setAvailableOptions] = useState<any[]>([]);
 
     useEffect(() => {
         setTotalMontant(packPrice + optionsPrice);
@@ -62,11 +69,39 @@ export default function ReservationsPage() {
     useEffect(() => {
         fetchReservations();
         fetchClients();
+        fetchFlotte();
+
+        const storedPacks = localStorage.getItem('ebrie_packs');
+        if (storedPacks) {
+            setAvailablePacks(JSON.parse(storedPacks));
+        } else {
+            setAvailablePacks([
+                { id: '1', name: 'Demande en mariage Premium', price: 800000 },
+                { id: '2', name: 'Anniversaire Premium', price: 600000 },
+                { id: '3', name: 'Corporate Premium', price: 1000000 }
+            ]);
+        }
+
+        const storedOptions = localStorage.getItem('ebrie_options');
+        if (storedOptions) {
+            setAvailableOptions(JSON.parse(storedOptions));
+        } else {
+            setAvailableOptions([
+                { id: '1', name: 'Décoration romantique', price: 50000 },
+                { id: '2', name: 'Photographe', price: 100000 },
+                { id: '3', name: 'DJ professionnel', price: 200000 }
+            ]);
+        }
     }, []);
 
     const fetchClients = async () => {
-        const { data } = await supabase.from('clients').select('id, nom, telephone');
+        const { data } = await supabase.from('clients').select('id, nom, telephone, email, origine_contact');
         if (data) setClientsList(data);
+    };
+
+    const fetchFlotte = async () => {
+        const { data } = await supabase.from('flotte').select('id, nom_navire');
+        if (data) setFlotteList(data);
     };
 
     const fetchReservations = async () => {
@@ -76,7 +111,8 @@ export default function ReservationsPage() {
                 .from('reservations')
                 .select(`
                     *,
-                    clients (nom, telephone, email)
+                    clients (nom, telephone, email, origine_contact),
+                    flotte (nom_navire)
                 `)
                 .order('created_at', { ascending: false });
 
@@ -93,7 +129,7 @@ export default function ReservationsPage() {
                 email: r.clients?.email || '',
                 prestDate: new Date(r.date_prestation).toLocaleDateString('fr-FR'),
                 prestDetails: `${r.heure_debut?.substring(0,5) || ''} • ${r.nb_personnes} Pax`,
-                bateau: r.type_prestation,
+                bateau: r.flotte?.nom_navire || 'Non alloué',
                 statut: r.statut,
                 statutColor: r.statut === 'Confirmée' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-yellow-100 text-yellow-700 border-yellow-200',
                 total: r.montant_total?.toLocaleString() + ' FCFA',
@@ -118,12 +154,14 @@ export default function ReservationsPage() {
             if (!finalClientId) {
                 const { data: clientData, error: clientError } = await supabase
                     .from('clients')
-                    .insert([{ nom: clientName, telephone: clientPhone }])
+                    .insert([{ nom: clientName, telephone: clientPhone, email: clientEmail, origine_contact: clientOrigine }])
                     .select()
                     .single();
                     
                 if (clientError) throw clientError;
                 finalClientId = clientData.id;
+            } else {
+                await supabase.from('clients').update({ email: clientEmail, origine_contact: clientOrigine }).eq('id', finalClientId);
             }
 
             // 2. Create Reservation
@@ -148,6 +186,7 @@ export default function ReservationsPage() {
                         heure_fin: heureDebut,
                         type_prestation: packType || 'Standard',
                         nb_personnes: nbPersonnes,
+                        navire_id: navireId || null,
                         montant_total: totalMontant,
                         statut: finalReservationStatus,
                         options: optionsList,
@@ -169,6 +208,7 @@ export default function ReservationsPage() {
                         heure_fin: heureDebut,
                         type_prestation: packType || 'Standard',
                         nb_personnes: nbPersonnes,
+                        navire_id: navireId || null,
                         montant_total: totalMontant,
                         statut: finalReservationStatus,
                         options: optionsList,
@@ -223,6 +263,8 @@ export default function ReservationsPage() {
             setClientName('');
             setClientId('');
             setClientPhone('');
+            setClientEmail('');
+            setClientOrigine('WhatsApp');
             setDatePrestation('');
             setHeureDebut('');
             setNbPersonnes(1);
@@ -247,44 +289,38 @@ export default function ReservationsPage() {
         setClientId(r.client_id || '');
         setClientName(r.clients?.nom || '');
         setClientPhone(r.clients?.telephone || '');
+        setClientEmail(r.clients?.email || '');
+        setClientOrigine(r.clients?.origine_contact || 'WhatsApp');
         
         setDatePrestation(r.date_prestation || '');
         setHeureDebut(r.heure_debut ? r.heure_debut.substring(0, 5) : '');
         setNbPersonnes(r.nb_personnes || 1);
+        setNavireId(r.navire_id || '');
         
-        // Sanitize options and calculate exact optionsPrice
+        // Options saved directly as boolean map in the DB
         const rawOptions = r.options || {};
-        const strOpts = JSON.stringify(rawOptions).toLowerCase();
         const cleanOptions: any = {};
-        let calcOptPrice = 0;
-
-        if (strOpts.includes('romantique')) {
-            cleanOptions['Décoration romantique (+50K)'] = true;
-            calcOptPrice += 50000;
-        }
-        if (strOpts.includes('photographe')) {
-            cleanOptions['Photographe (+100K)'] = true;
-            calcOptPrice += 100000;
-        }
-        if (strOpts.includes('dj')) {
-            cleanOptions['DJ professionnel (+200K)'] = true;
-            calcOptPrice += 200000;
-        }
+        Object.keys(rawOptions).forEach(k => {
+            if (rawOptions[k]) cleanOptions[k] = true;
+        });
 
         // Determine pack price from packType to visually match the select
-        let exactPackType = '';
-        if (r.type_prestation?.includes('Mariage')) {
-            exactPackType = 'Demande en mariage Premium (800 000 FCFA)';
-        } else if (r.type_prestation?.includes('Anniversaire')) {
-            exactPackType = 'Anniversaire Premium (600 000 FCFA)';
-        } else if (r.type_prestation?.includes('Corporate')) {
-            exactPackType = 'Corporate Premium (1 000 000 FCFA)';
-        } else {
-            exactPackType = r.type_prestation || '';
-        }
+        let exactPackType = r.type_prestation || '';
         
-        // Pack price is strictly derived from the DB's total minus the options
-        const calculatedPackPrice = Math.max(0, (r.montant_total || 0) - calcOptPrice);
+        // Find if this exact pack exists in available packs
+        let foundPackPrice = 0;
+        const tpMatch = exactPackType.match(/\(([\d\s]+)\s*FCFA\)/);
+        if (tpMatch) {
+            foundPackPrice = parseInt(tpMatch[1].replace(/\s/g, ''));
+        } else {
+            // legacy fallback
+            if (exactPackType.includes('Mariage')) foundPackPrice = 800000;
+            else if (exactPackType.includes('Anniversaire')) foundPackPrice = 600000;
+            else if (exactPackType.includes('Corporate')) foundPackPrice = 1000000;
+        }
+
+        const calculatedPackPrice = foundPackPrice;
+        const calcOptPrice = Math.max(0, (r.montant_total || 0) - calculatedPackPrice);
 
         setPackType(exactPackType);
         setPackPrice(calculatedPackPrice);
@@ -302,9 +338,12 @@ export default function ReservationsPage() {
         setClientName('');
         setClientId('');
         setClientPhone('');
+        setClientEmail('');
+        setClientOrigine('WhatsApp');
         setDatePrestation('');
         setHeureDebut('');
         setNbPersonnes(1);
+        setNavireId('');
         setPackPrice(0);
         setReservationStatus('En attente');
         setOptionsList({});
@@ -364,57 +403,7 @@ export default function ReservationsPage() {
             
 
     
-    {/* Overlay mobile */}
-    {isSidebarOpen && (
-        <div className="fixed inset-0 bg-gray-900/50 z-40 md:hidden" onClick={() => setIsSidebarOpen(false)}></div>
-    )}
-    <aside className={"w-64 bg-white shadow-xl flex flex-col z-50 fixed inset-y-0 left-0 transform " + (isSidebarOpen ? "translate-x-0" : "-translate-x-full") + " md:relative md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0"}>
-        <button onClick={() => setIsSidebarOpen(false)} className="absolute right-4 top-4 md:hidden text-gray-400 hover:text-gray-600 z-50">
-            <i className="fa-solid fa-times text-xl"></i>
-        </button>
-        <div className="p-6 flex items-center justify-center border-b border-gray-100">
-            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg mr-3">
-                <i className="fa-solid fa-water"></i>
-            </div>
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500">
-                Ebrié Lagoon
-            </h1>
-        </div>
-        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
-            <div className="px-2 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Principal</div>
-            <a href="/" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
-                <i className="fa-solid fa-chart-pie w-6"></i> Tableau de bord
-            </a>
-            <a href="/reservations" className="sidebar-item active flex items-center px-4 py-3 text-sm font-medium">
-                <i className="fa-solid fa-calendar-check w-6"></i> Réservations
-            </a>
-            <a href="/finances" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
-                <i className="fa-solid fa-file-invoice-dollar w-6"></i> Finances & Devis
-            </a>
-            <a href="/flotte" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
-                <i className="fa-solid fa-ship w-6"></i> Flotte & Opérations
-            </a>
-            <a href="/incidents" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
-                <i className="fa-solid fa-triangle-exclamation w-6"></i> Incidents
-            </a>
-            <a href="/partenaires" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
-                <i className="fa-solid fa-handshake w-6"></i> Partenaires
-            </a>
-            
-            <div className="px-2 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Administration</div>
-            <a href="/clients" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
-                <i className="fa-solid fa-users w-6"></i> Clients
-            </a>
-            <a href="/parametres" className="sidebar-item text-gray-600 flex items-center px-4 py-3 text-sm font-medium">
-                <i className="fa-solid fa-gear w-6"></i> Paramètres
-            </a>
-        </nav>
-        <div className="p-4 border-t border-gray-100">
-            <button className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:text-red-600 transition">
-                <i className="fa-solid fa-sign-out-alt w-6"></i> Déconnexion
-            </button>
-        </div>
-    </aside>
+    <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
     
     <main className="flex-1 flex flex-col h-screen overflow-y-auto bg-slate-50 relative">
@@ -632,15 +621,15 @@ export default function ReservationsPage() {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                            <input type="email" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                            <input type="email" value={clientEmail} onChange={e => setClientEmail(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Canal d'acquisition</label>
-                            <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                                <option>WhatsApp</option>
-                                <option>Site Web</option>
-                                <option>Appel Téléphonique</option>
-                                <option>Partenaire / Apporteur</option>
+                            <select value={clientOrigine} onChange={e => setClientOrigine(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="WhatsApp">WhatsApp</option>
+                                <option value="Site Web">Site Web</option>
+                                <option value="Téléphone">Téléphone</option>
+                                <option value="Partenaires">Partenaires</option>
                             </select>
                         </div>
                     </div>
@@ -667,10 +656,12 @@ export default function ReservationsPage() {
                                 setPackType(opt.value);
                             }} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-blue-50">
                                 <option value="" data-price="0">-- Choisir un pack --</option>
-                                <option value="Demande en mariage Premium (800 000 FCFA)" data-price="800000">Demande en mariage Premium (800 000 FCFA)</option>
-                                <option value="Anniversaire Premium (600 000 FCFA)" data-price="600000">Anniversaire Premium (600 000 FCFA)</option>
-                                <option value="Corporate Premium (1 000 000 FCFA)" data-price="1000000">Corporate Premium (1 000 000 FCFA)</option>
-                                {packType && !['Demande en mariage Premium (800 000 FCFA)', 'Anniversaire Premium (600 000 FCFA)', 'Corporate Premium (1 000 000 FCFA)'].includes(packType) && (
+                                {availablePacks.map(pack => (
+                                    <option key={pack.id} value={`${pack.name} (${pack.price.toLocaleString()} FCFA)`} data-price={pack.price}>
+                                        {pack.name} ({pack.price.toLocaleString()} FCFA)
+                                    </option>
+                                ))}
+                                {packType && !availablePacks.some(p => `${p.name} (${p.price.toLocaleString()} FCFA)` === packType) && (
                                     <option value={packType} data-price={packPrice}>{packType}</option>
                                 )}
                             </select>
@@ -689,10 +680,11 @@ export default function ReservationsPage() {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Bateau / Partenaire Alloué</label>
-                            <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                                <option>-- À définir --</option>
-                                <option>Catamaran "Lagune Express"</option>
-                                <option>Yacht "VIP Ebrié"</option>
+                            <select value={navireId} onChange={e => setNavireId(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="">-- À définir --</option>
+                                {flotteList.map(f => (
+                                    <option key={f.id} value={f.id}>{f.nom_navire}</option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -721,24 +713,17 @@ export default function ReservationsPage() {
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-1">Options Additionnelles</label>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                <label className="flex items-center text-sm cursor-pointer">
-                                    <input type="checkbox" 
-                                        checked={!!optionsList['Décoration romantique (+50K)']} 
-                                        onChange={(e) => handleOptionChange(e, 'Décoration romantique (+50K)', 50000)} 
-                                        data-price="50000" className="mr-2" /> Décoration romantique (+50K)
-                                </label>
-                                <label className="flex items-center text-sm cursor-pointer">
-                                    <input type="checkbox" 
-                                        checked={!!optionsList['Photographe (+100K)']} 
-                                        onChange={(e) => handleOptionChange(e, 'Photographe (+100K)', 100000)} 
-                                        data-price="100000" className="mr-2" /> Photographe (+100K)
-                                </label>
-                                <label className="flex items-center text-sm cursor-pointer">
-                                    <input type="checkbox" 
-                                        checked={!!optionsList['DJ professionnel (+200K)']} 
-                                        onChange={(e) => handleOptionChange(e, 'DJ professionnel (+200K)', 200000)} 
-                                        data-price="200000" className="mr-2" /> DJ professionnel (+200K)
-                                </label>
+                                {availableOptions.map(option => {
+                                    const optLabel = `${option.name} (+${(option.price / 1000)}K)`;
+                                    return (
+                                        <label key={option.id} className="flex items-center text-sm cursor-pointer">
+                                            <input type="checkbox" 
+                                                checked={!!optionsList[optLabel]} 
+                                                onChange={(e) => handleOptionChange(e, optLabel, option.price)} 
+                                                data-price={option.price} className="mr-2" /> {optLabel}
+                                        </label>
+                                    );
+                                })}
                             </div>
                         </div>
                         <div className="col-span-2 mt-2">
@@ -879,12 +864,14 @@ export default function ReservationsPage() {
                                             return;
                                         }
                                         try {
-                                            const { data, error } = await supabase.from('clients').insert([{ nom: n, telephone: p }]).select().single();
+                                            const { data, error } = await supabase.from('clients').insert([{ nom: n, telephone: p, email: '', origine_contact: 'WhatsApp' }]).select().single();
                                             if (error) throw error;
                                             setClientsList(prev => [...prev, data]);
                                             setClientId(data.id);
                                             setClientName(data.nom);
                                             setClientPhone(data.telephone || '');
+                                            setClientEmail(data.email || '');
+                                            setClientOrigine(data.origine_contact || 'WhatsApp');
                                             setNotification({ message: 'Client ajouté et sélectionné avec succès !', type: 'success' });
                                             setIsClientSearchModalOpen(false);
                                             setClientSearchTerm('');
@@ -908,7 +895,9 @@ export default function ReservationsPage() {
                             onClick={() => {
                                 setClientId(client.id);
                                 setClientName(client.nom);
-                                setClientPhone(client.telephone);
+                                setClientPhone(client.telephone || '');
+                                setClientEmail(client.email || '');
+                                setClientOrigine(client.origine_contact || 'WhatsApp');
                                 setIsClientSearchModalOpen(false);
                             }}
                             className="p-3 hover:bg-blue-50 border-b border-gray-50 cursor-pointer rounded transition flex justify-between items-center"

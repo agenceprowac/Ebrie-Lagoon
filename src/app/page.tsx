@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
 import { supabase } from '@/utils/supabase';
+import { Sidebar } from '@/components/Sidebar';
 
 export default function Dashboard() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -20,27 +21,7 @@ export default function Dashboard() {
     };
 
     useEffect(() => {
-        const fetchDashboardData = async () => {
-            const { data: finances } = await supabase.from('finances').select('total_ttc').eq('type_document', 'Facture');
-            if (finances) {
-                const total = finances.reduce((acc, curr) => acc + (curr.total_ttc || 0), 0);
-                setChiffreAffaires(total);
-            }
-
-            const { count: resCount } = await supabase.from('reservations').select('*', { count: 'exact', head: true });
-            if (resCount !== null) setReservationsCount(resCount);
-
-            const { count: incCount } = await supabase.from('incidents').select('*', { count: 'exact', head: true }).eq('statut', 'En cours');
-            if (incCount !== null) setIncidentsCount(incCount);
-
-            const { data: recentRes } = await supabase.from('reservations')
-                .select('numero_reference, clients(nom), date_prestation, montant_total, statut')
-                .order('created_at', { ascending: false })
-                .limit(5);
-            if (recentRes) setRecentReservations(recentRes);
-        };
-        fetchDashboardData();
-
+        let isMounted = true;
         let revChartInstance: Chart | null = null;
         let canalChartInstance: Chart | null = null;
 
@@ -108,7 +89,65 @@ export default function Dashboard() {
             }
         }
 
+        const fetchDashboardData = async () => {
+            const { data: finances } = await supabase.from('finances').select('total_ttc, date_creation').eq('type_document', 'Facture');
+            if (!isMounted) return;
+            
+            if (finances) {
+                const total = finances.reduce((acc, curr) => acc + (curr.total_ttc || 0), 0);
+                setChiffreAffaires(total);
+
+                if (revChartInstance) {
+                    const monthly = [0, 0, 0, 0, 0, 0];
+                    finances.forEach(f => {
+                        const d = new Date(f.date_creation);
+                        const m = d.getMonth();
+                        if (m < 6) monthly[m] += f.total_ttc || 0;
+                    });
+                    revChartInstance.data.datasets[0].data = monthly;
+                    revChartInstance.update();
+                }
+            }
+
+            const { count: resCount } = await supabase.from('reservations').select('*', { count: 'exact', head: true });
+            if (!isMounted) return;
+            if (resCount !== null) setReservationsCount(resCount);
+
+            const { count: incCount } = await supabase.from('incidents').select('*', { count: 'exact', head: true }).eq('statut', 'En cours');
+            if (!isMounted) return;
+            if (incCount !== null) setIncidentsCount(incCount);
+
+            const { data: recentRes } = await supabase.from('reservations')
+                .select('numero_reference, clients(nom), date_prestation, montant_total, statut')
+                .order('created_at', { ascending: false })
+                .limit(5);
+            if (!isMounted) return;
+            if (recentRes) setRecentReservations(recentRes);
+
+            const { data: clients } = await supabase.from('clients').select('origine_contact');
+            if (!isMounted) return;
+            if (clients && canalChartInstance) {
+                const canalCounts = { WhatsApp: 0, 'Site Web': 0, 'Téléphone': 0, Partenaires: 0 };
+                clients.forEach(c => {
+                    if (c.origine_contact === 'WhatsApp') canalCounts.WhatsApp++;
+                    else if (c.origine_contact === 'Site Web') canalCounts['Site Web']++;
+                    else if (c.origine_contact === 'Téléphone') canalCounts['Téléphone']++;
+                    else canalCounts.Partenaires++;
+                });
+                canalChartInstance.data.datasets[0].data = [
+                    canalCounts.WhatsApp, 
+                    canalCounts['Site Web'], 
+                    canalCounts['Téléphone'], 
+                    canalCounts.Partenaires
+                ];
+                canalChartInstance.update();
+            }
+        };
+
+        fetchDashboardData();
+
         return () => {
+            isMounted = false;
             if (revChartInstance) revChartInstance.destroy();
             if (canalChartInstance) canalChartInstance.destroy();
         };
@@ -117,58 +156,7 @@ export default function Dashboard() {
     return (
         <div className="flex h-screen overflow-hidden text-gray-800 bg-slate-50 font-sans">
             {/* Sidebar */}
-            {/* Overlay mobile */}
-            {isSidebarOpen && (
-                <div className="fixed inset-0 bg-gray-900/50 z-40 md:hidden" onClick={() => setIsSidebarOpen(false)}></div>
-            )}
-            <aside className={"w-64 bg-white shadow-xl flex flex-col z-50 fixed inset-y-0 left-0 transform " + (isSidebarOpen ? "translate-x-0" : "-translate-x-full") + " md:relative md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0"}>
-                <button onClick={() => setIsSidebarOpen(false)} className="absolute right-4 top-4 md:hidden text-gray-400 hover:text-gray-600 z-50">
-                    <i className="fa-solid fa-times text-xl"></i>
-                </button>
-                <div className="p-6 flex items-center justify-center border-b border-gray-100">
-                    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg mr-3">
-                        <i className="fa-solid fa-water"></i>
-                    </div>
-                    <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500">
-                        Ebrié Lagoon
-                    </h1>
-                </div>
-                <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
-                    <div className="px-2 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Principal</div>
-                    <Link href="/" className="sidebar-item active bg-blue-600 text-white flex items-center px-4 py-3 text-sm font-medium rounded-lg">
-                        <i className="fa-solid fa-chart-pie w-6"></i> Tableau de bord
-                    </Link>
-                    <Link href="/reservations" className="sidebar-item text-gray-600 hover:bg-blue-50 hover:text-blue-700 flex items-center px-4 py-3 text-sm font-medium rounded-lg transition">
-                        <i className="fa-solid fa-calendar-check w-6"></i> Réservations
-                    </Link>
-                    <Link href="/finances" className="sidebar-item text-gray-600 hover:bg-blue-50 hover:text-blue-700 flex items-center px-4 py-3 text-sm font-medium rounded-lg transition">
-                        <i className="fa-solid fa-file-invoice-dollar w-6"></i> Finances & Devis
-                    </Link>
-                    <Link href="/flotte" className="sidebar-item text-gray-600 hover:bg-blue-50 hover:text-blue-700 flex items-center px-4 py-3 text-sm font-medium rounded-lg transition">
-                        <i className="fa-solid fa-ship w-6"></i> Flotte & Opérations
-                    </Link>
-                    <Link href="/incidents" className="sidebar-item text-gray-600 hover:bg-blue-50 hover:text-blue-700 flex items-center px-4 py-3 text-sm font-medium rounded-lg transition">
-                        <i className="fa-solid fa-triangle-exclamation w-6"></i> Incidents
-                    </Link>
-                    <Link href="/partenaires" className="sidebar-item text-gray-600 hover:bg-blue-50 hover:text-blue-700 flex items-center px-4 py-3 text-sm font-medium rounded-lg transition">
-                        <i className="fa-solid fa-handshake w-6"></i> Partenaires
-                    </Link>
-
-                    <div className="px-2 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Administration</div>
-                    <Link href="/clients" className="sidebar-item text-gray-600 hover:bg-blue-50 hover:text-blue-700 flex items-center px-4 py-3 text-sm font-medium rounded-lg transition">
-                        <i className="fa-solid fa-users w-6"></i> Clients
-                    </Link>
-                    <Link href="/parametres" className="sidebar-item text-gray-600 hover:bg-blue-50 hover:text-blue-700 flex items-center px-4 py-3 text-sm font-medium rounded-lg transition">
-                        <i className="fa-solid fa-gear w-6"></i> Paramètres
-                    </Link>
-                </nav>
-                <div className="p-4 border-t border-gray-100">
-                    <button className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:text-red-600 transition">
-                        <i className="fa-solid fa-sign-out-alt w-6"></i> Déconnexion
-                    </button>
-                </div>
-            </aside>
-
+            <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
             {/* Main Content */}
             <main className="flex-1 flex flex-col h-screen overflow-y-auto bg-slate-50">
                 {/* Header */}
