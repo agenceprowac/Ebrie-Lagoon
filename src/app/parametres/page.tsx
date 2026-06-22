@@ -842,6 +842,56 @@ Validité du devis : 15 jours.`} />
                                 Sauvegarder les tarifs
                             </button>
                         </div>
+                                        </div>
+
+                    {/* Onglet Notifications */}
+                    <div id="tab-notifications" className={`p-6 md:p-8  ${activeTab === 'notifications' ? 'block' : 'hidden'}`}>
+                        <div className="mb-6">
+                            <h3 className="text-lg font-bold text-gray-800">Paramètres de Notifications</h3>
+                            <p className="text-sm text-gray-500">Gérez vos préférences d'alertes et de notifications système</p>
+                        </div>
+                        
+                        <div className="space-y-4 max-w-3xl">
+                            <div className="p-5 border border-gray-200 rounded-xl bg-white flex items-center justify-between hover:shadow-sm transition">
+                                <div className="flex items-center">
+                                    <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mr-4">
+                                        <i className="fa-solid fa-calendar-check"></i>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-gray-800 text-sm">Nouvelles Réservations</h4>
+                                        <p className="text-xs text-gray-500">Recevoir une alerte lors d'une nouvelle réservation en ligne</p>
+                                    </div>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" className="sr-only peer" defaultChecked />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+
+                            <div className="p-5 border border-gray-200 rounded-xl bg-white flex items-center justify-between hover:shadow-sm transition">
+                                <div className="flex items-center">
+                                    <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center mr-4">
+                                        <i className="fa-solid fa-triangle-exclamation"></i>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-gray-800 text-sm">Alertes Incidents</h4>
+                                        <p className="text-xs text-gray-500">Être notifié immédiatement lorsqu'un incident critique est signalé</p>
+                                    </div>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" className="sr-only peer" defaultChecked />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                </label>
+                            </div>
+
+                            <div className="pt-4 flex justify-end">
+                                <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg shadow-md transition text-sm font-medium flex items-center" onClick={() => {
+                                    alert("Préférences de notifications sauvegardées avec succès !");
+                                }}>
+                                    Sauvegarder les préférences
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
