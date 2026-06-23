@@ -36,6 +36,10 @@ export default function ClientsPage() {
     const [telephoneSecondaire, setTelephoneSecondaire] = useState('');
     const [email, setEmail] = useState('');
     const [categorie, setCategorie] = useState('particulier');
+    const [typeClient, setTypeClient] = useState('Particulier');
+    const [sourceContact, setSourceContact] = useState('');
+    const [statut, setStatut] = useState('Actif');
+    const [observationsCommerciales, setObservationsCommerciales] = useState('');
     const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
     const [editingClientId, setEditingClientId] = useState<string | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -89,17 +93,27 @@ export default function ClientsPage() {
         }
 
         try {
+            const payload = { 
+                nom, 
+                telephone, 
+                email, 
+                type_client: typeClient, 
+                source_contact: sourceContact, 
+                statut, 
+                observations_commerciales: observationsCommerciales 
+            };
+
             if (editingClientId) {
                 const { error } = await supabase
                     .from('clients')
-                    .update({ nom, telephone, email })
+                    .update(payload)
                     .eq('id', editingClientId);
                 if (error) throw error;
                 setNotification({ message: 'Client modifié avec succès !', type: 'success' });
             } else {
                 const { error } = await supabase
                     .from('clients')
-                    .insert([{ nom, telephone, email }]);
+                    .insert([payload]);
                 if (error) throw error;
                 setNotification({ message: 'Client ajouté avec succès !', type: 'success' });
             }
@@ -113,6 +127,10 @@ export default function ClientsPage() {
             setTelephoneSecondaire('');
             setEmail('');
             setCategorie('particulier');
+            setTypeClient('Particulier');
+            setSourceContact('');
+            setStatut('Actif');
+            setObservationsCommerciales('');
             
             fetchClients();
             
@@ -126,11 +144,15 @@ export default function ClientsPage() {
 
     const handleEditClient = (client: any) => {
         setEditingClientId(client.id);
-        setNom(client.nom);
+        setNom(client.nom || '');
         setTelephone(client.telephone || '');
         setTelephoneSecondaire(client.telephoneSecondaire || '');
         setEmail(client.email || '');
         setCategorie(client.categorie || 'particulier');
+        setTypeClient(client.type_client || 'Particulier');
+        setSourceContact(client.source_contact || '');
+        setStatut(client.statut || 'Actif');
+        setObservationsCommerciales(client.observations_commerciales || '');
         setIsNewClientModalOpen(true);
         setIsHistoryModalOpen(false); // au cas où on l'ouvre depuis la fiche
     };
@@ -199,6 +221,10 @@ export default function ClientsPage() {
                     setTelephoneSecondaire('');
                     setEmail('');
                     setCategorie('particulier');
+                    setTypeClient('Particulier');
+                    setSourceContact('');
+                    setStatut('Actif');
+                    setObservationsCommerciales('');
                     setIsNewClientModalOpen(true);
                 }} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl shadow-md transition transform hover:-translate-y-0.5 text-sm font-medium flex items-center">
                     <i className="fa-solid fa-user-plus mr-2"></i> Ajouter un Client
@@ -381,13 +407,30 @@ export default function ClientsPage() {
                         <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
                         <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                     </div>
-                    <div className="col-span-2">
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Catégorie</label>
-                        <select value={categorie} onChange={e => setCategorie(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="particulier">Particulier</option>
-                            <option value="entreprise">Entreprise / Corporate</option>
-                            <option value="vip">VIP</option>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Type de Client *</label>
+                        <select value={typeClient} onChange={e => setTypeClient(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="Particulier">Particulier</option>
+                            <option value="Entreprise / Corporate">Entreprise / Corporate</option>
+                            <option value="VIP">VIP</option>
+                            <option value="Agence de voyage">Agence de voyage</option>
                         </select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Statut *</label>
+                        <select value={statut} onChange={e => setStatut(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="Actif">Actif</option>
+                            <option value="Inactif">Inactif</option>
+                            <option value="Lead / Prospect">Lead / Prospect</option>
+                        </select>
+                    </div>
+                    <div className="col-span-2">
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Source du Contact</label>
+                        <input type="text" placeholder="ex: Réseaux sociaux, Recommandation, Site web..." value={sourceContact} onChange={e => setSourceContact(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                    </div>
+                    <div className="col-span-2">
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Observations Commerciales</label>
+                        <textarea rows={3} value={observationsCommerciales} onChange={e => setObservationsCommerciales(e.target.value)} placeholder="Besoins spécifiques, historique informel..." className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
                     </div>
                 </div>
             </div>

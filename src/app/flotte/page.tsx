@@ -12,6 +12,19 @@ type Navire = {
     moteur: string;
     statut: string;
     raison_immobilisation?: string;
+    proprietaire?: string;
+    contact_proprietaire?: string;
+    contact_capitaine?: string;
+    zone_embarquement?: string;
+    tarif_horaire?: number;
+    tarif_demi_journee?: number;
+    tarif_evenement?: number;
+    disponibilite_habituelle?: string;
+    photo?: string;
+    documents_administratifs?: string;
+    assurance?: string;
+    date_validite_assurance?: string;
+    observation_securitaire?: string;
 };
 
 export default function FlottePage() {
@@ -45,7 +58,20 @@ export default function FlottePage() {
     const [typeNavire, setTypeNavire] = useState('Catamaran');
     const [capacite, setCapacite] = useState<number>(10);
     const [moteur, setMoteur] = useState('');
-    const [statut, setStatut] = useState('Disponible');
+    const [statut, setStatut] = useState('actif');
+    const [proprietaire, setProprietaire] = useState('');
+    const [contactProprietaire, setContactProprietaire] = useState('');
+    const [contactCapitaine, setContactCapitaine] = useState('');
+    const [zoneEmbarquement, setZoneEmbarquement] = useState('');
+    const [tarifHoraire, setTarifHoraire] = useState<number | ''>('');
+    const [tarifDemiJournee, setTarifDemiJournee] = useState<number | ''>('');
+    const [tarifEvenement, setTarifEvenement] = useState<number | ''>('');
+    const [disponibiliteHabituelle, setDisponibiliteHabituelle] = useState('');
+    const [photo, setPhoto] = useState('');
+    const [documentsAdministratifs, setDocumentsAdministratifs] = useState('');
+    const [assurance, setAssurance] = useState('');
+    const [dateValiditeAssurance, setDateValiditeAssurance] = useState('');
+    const [observationSecuritaire, setObservationSecuritaire] = useState('');
 
     // Nouveaux états pour Carburant et Affectation
     const [isCarburantModalOpen, setIsCarburantModalOpen] = useState(false);
@@ -77,7 +103,11 @@ export default function FlottePage() {
     };
 
     const handleAddNavire = async () => {
-        if (!nomNavire || !typeNavire || !capacite) return alert('Veuillez remplir les champs obligatoires.');
+        if (!nomNavire || !typeNavire || !capacite) {
+            setNotification({ message: 'Veuillez remplir les champs obligatoires.', type: 'error' });
+            setTimeout(() => setNotification(null), 3000);
+            return;
+        }
         const currentUserStr = localStorage.getItem('currentUser');
         const currentUserName = currentUserStr ? JSON.parse(currentUserStr).name : 'Système';
 
@@ -88,6 +118,19 @@ export default function FlottePage() {
             capacite,
             moteur,
             statut,
+            proprietaire,
+            contact_proprietaire: contactProprietaire,
+            contact_capitaine: contactCapitaine,
+            zone_embarquement: zoneEmbarquement,
+            tarif_horaire: tarifHoraire || null,
+            tarif_demi_journee: tarifDemiJournee || null,
+            tarif_evenement: tarifEvenement || null,
+            disponibilite_habituelle: disponibiliteHabituelle,
+            photo,
+            documents_administratifs: documentsAdministratifs,
+            assurance,
+            date_validite_assurance: dateValiditeAssurance || null,
+            observation_securitaire: observationSecuritaire,
             created_by_name: currentUserName,
             updated_by_name: currentUserName,
                         updated_at: new Date().toISOString()
@@ -95,12 +138,15 @@ export default function FlottePage() {
         
         if (error) {
             console.error(error);
-            alert('Erreur lors de l\'ajout: ' + error.message);
+            setNotification({ message: 'Erreur lors de l\'ajout: ' + error.message, type: 'error' });
+            setTimeout(() => setNotification(null), 3000);
         } else if (data) {
             setNavires([...navires, data[0] as Navire]);
             setIsAddShipModalOpen(false);
             setNomNavire(''); setMoteur(''); setCapacite(10);
-            alert('Navire ajouté avec succès !');
+            setProprietaire(''); setContactProprietaire(''); setContactCapitaine(''); setZoneEmbarquement(''); setTarifHoraire(''); setTarifDemiJournee(''); setTarifEvenement(''); setDisponibiliteHabituelle(''); setPhoto(''); setDocumentsAdministratifs(''); setAssurance(''); setDateValiditeAssurance(''); setObservationSecuritaire('');
+            setNotification({ message: 'Navire ajouté avec succès !', type: 'success' });
+            setTimeout(() => setNotification(null), 3000);
         }
         setIsSubmitting(false);
     };
@@ -321,16 +367,29 @@ export default function FlottePage() {
             {/* Modal Ajouter Navire */}
             {isAddShipModalOpen && (
                 <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                             <h3 className="text-lg font-bold text-gray-800">Ajouter un Navire</h3>
                             <button onClick={() => setIsAddShipModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition"><i className="fa-solid fa-times text-xl"></i></button>
                         </div>
                         <div className="p-6 overflow-y-auto flex-1">
                             <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nom du Navire *</label>
-                                    <input type="text" value={nomNavire} onChange={e => setNomNavire(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nom du Navire *</label>
+                                        <input type="text" value={nomNavire} onChange={e => setNomNavire(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Statut *</label>
+                                        <select value={statut} onChange={e => setStatut(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                            <option value="actif">Actif</option>
+                                            <option value="suspendu">Suspendu</option>
+                                            <option value="à vérifier">À vérifier</option>
+                                            <option value="non conforme">Non conforme</option>
+                                            <option value="En Course">En Course</option>
+                                            <option value="Maintenance">Maintenance</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
@@ -346,17 +405,75 @@ export default function FlottePage() {
                                         <input type="number" min="1" value={capacite} onChange={e => setCapacite(parseInt(e.target.value) || 1)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Moteur</label>
-                                    <input type="text" placeholder="ex: 2x 250 CV Yamaha" value={moteur} onChange={e => setMoteur(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Moteur</label>
+                                        <input type="text" placeholder="ex: 2x 250 CV Yamaha" value={moteur} onChange={e => setMoteur(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Zone d'embarquement</label>
+                                        <input type="text" value={zoneEmbarquement} onChange={e => setZoneEmbarquement(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                    </div>
+                                </div>
+                                
+                                <h4 className="text-sm font-bold text-gray-800 mt-6 border-b pb-2">Informations Propriétaire & Contact</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Propriétaire</label>
+                                        <input type="text" value={proprietaire} onChange={e => setProprietaire(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Contact Propriétaire</label>
+                                        <input type="text" value={contactProprietaire} onChange={e => setContactProprietaire(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                    </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Statut *</label>
-                                    <select value={statut} onChange={e => setStatut(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                                        <option>Disponible</option>
-                                        <option>En Course</option>
-                                        <option>Maintenance</option>
-                                    </select>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Capitaine</label>
+                                    <input type="text" value={contactCapitaine} onChange={e => setContactCapitaine(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                </div>
+
+                                <h4 className="text-sm font-bold text-gray-800 mt-6 border-b pb-2">Tarification & Disponibilité</h4>
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Tarif Horaire</label>
+                                        <input type="number" value={tarifHoraire} onChange={e => setTarifHoraire(Number(e.target.value) || '')} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Tarif 1/2 Journée</label>
+                                        <input type="number" value={tarifDemiJournee} onChange={e => setTarifDemiJournee(Number(e.target.value) || '')} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Tarif Événement</label>
+                                        <input type="number" value={tarifEvenement} onChange={e => setTarifEvenement(Number(e.target.value) || '')} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Disponibilité Habituelle</label>
+                                    <input type="text" placeholder="ex: Lundi - Vendredi, 08h-18h" value={disponibiliteHabituelle} onChange={e => setDisponibiliteHabituelle(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                </div>
+
+                                <h4 className="text-sm font-bold text-gray-800 mt-6 border-b pb-2">Documents & Sécurité</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Assurance</label>
+                                        <input type="text" value={assurance} onChange={e => setAssurance(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Validité Assurance</label>
+                                        <input type="date" value={dateValiditeAssurance} onChange={e => setDateValiditeAssurance(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Documents Administratifs (URL ou description)</label>
+                                    <input type="text" value={documentsAdministratifs} onChange={e => setDocumentsAdministratifs(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Photo (URL)</label>
+                                    <input type="text" value={photo} onChange={e => setPhoto(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Observations Sécuritaires</label>
+                                    <textarea rows={3} value={observationSecuritaire} onChange={e => setObservationSecuritaire(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -457,7 +574,7 @@ export default function FlottePage() {
 
             {/* Notification Toast */}
             {notification && (
-                <div className={`fixed bottom-4 right-4 px-6 py-3 rounded-xl shadow-lg text-white font-medium z-50 animate-in slide-in-from-bottom-5 ${notification.type === 'success' ? 'bg-green-600' : notification.type === 'error' ? 'bg-red-600' : 'bg-blue-600'}`}>
+                <div className={`fixed bottom-4 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg text-white font-medium z-50 animate-in slide-in-from-bottom-5 ${notification.type === 'success' ? 'bg-green-600' : notification.type === 'error' ? 'bg-red-600' : 'bg-blue-600'}`}>
                     <i className={`fa-solid ${notification.type === 'success' ? 'fa-check-circle' : notification.type === 'error' ? 'fa-triangle-exclamation' : 'fa-info-circle'} mr-2`}></i>
                     {notification.message}
                 </div>
