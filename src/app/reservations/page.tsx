@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 import { Sidebar } from '@/components/Sidebar';
+import { NotificationModal } from '@/components/NotificationModal';
 
 
 export default function ReservationsPage() {
@@ -845,19 +846,7 @@ export default function ReservationsPage() {
     
 
         {/* Toast Notification */}
-        {notification && (
-            <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-[100] transition-all duration-300">
-                <div className={`flex items-center px-6 py-4 rounded-xl shadow-2xl border ${notification.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-blue-50 border-blue-200 text-blue-800'}`}>
-                    <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center mr-4 ${notification.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
-                        <i className={`fa-solid ${notification.type === 'success' ? 'fa-check' : 'fa-info'}`}></i>
-                    </div>
-                    <p className="font-semibold text-sm">{notification.message}</p>
-                    <button onClick={() => setNotification(null)} className="ml-6 text-gray-400 hover:text-gray-600 transition">
-                        <i className="fa-solid fa-times"></i>
-                    </button>
-                </div>
-            </div>
-        )}
+        <NotificationModal notification={notification} onClose={() => setNotification(null)} />
 
 
     {/* Client Search Modal */}

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 import { Sidebar } from '@/components/Sidebar';
+import { NotificationModal } from '@/components/NotificationModal';
 
 type Navire = {
     id: string;
@@ -573,12 +574,7 @@ export default function FlottePage() {
             )}
 
             {/* Notification Toast */}
-            {notification && (
-                <div className={`fixed bottom-4 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg text-white font-medium z-50 animate-in slide-in-from-bottom-5 ${notification.type === 'success' ? 'bg-green-600' : notification.type === 'error' ? 'bg-red-600' : 'bg-blue-600'}`}>
-                    <i className={`fa-solid ${notification.type === 'success' ? 'fa-check-circle' : notification.type === 'error' ? 'fa-triangle-exclamation' : 'fa-info-circle'} mr-2`}></i>
-                    {notification.message}
-                </div>
-            )}
+            <NotificationModal notification={notification} onClose={() => setNotification(null)} />
         </div>
     );
 }

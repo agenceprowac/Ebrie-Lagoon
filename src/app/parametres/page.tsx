@@ -12,8 +12,8 @@ type AppRole = {
 };
 
 export const defaultRoles: AppRole[] = [
-    { id: 'admin', name: 'Administrateur', permissions: ['tableau_de_bord', 'reservations', 'finances', 'flotte', 'incidents', 'partenaires', 'clients', 'parametres'], isSystem: true },
-    { id: 'commercial', name: 'Commercial / Vente', permissions: ['tableau_de_bord', 'reservations', 'finances', 'clients', 'partenaires'], isSystem: false },
+    { id: 'admin', name: 'Administrateur', permissions: ['tableau_de_bord', 'reservations', 'finances', 'paiements', 'flotte', 'incidents', 'partenaires', 'clients', 'parametres'], isSystem: true },
+    { id: 'commercial', name: 'Commercial / Vente', permissions: ['tableau_de_bord', 'reservations', 'finances', 'paiements', 'clients', 'partenaires'], isSystem: false },
     { id: 'pilote', name: 'Pilote / Staff Technique', permissions: ['tableau_de_bord', 'flotte', 'incidents'], isSystem: false },
 ];
 

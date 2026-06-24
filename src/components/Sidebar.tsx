@@ -22,8 +22,8 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
             const storedRoles = localStorage.getItem('ebrie_roles');
             
             const defaultRoles = [
-                { id: 'admin', name: 'Administrateur', permissions: ['tableau_de_bord', 'reservations', 'finances', 'flotte', 'incidents', 'partenaires', 'clients', 'parametres'], isSystem: true },
-                { id: 'commercial', name: 'Commercial / Vente', permissions: ['tableau_de_bord', 'reservations', 'finances', 'clients', 'partenaires'], isSystem: false },
+                { id: 'admin', name: 'Administrateur', permissions: ['tableau_de_bord', 'reservations', 'finances', 'paiements', 'flotte', 'incidents', 'partenaires', 'clients', 'parametres'], isSystem: true },
+                { id: 'commercial', name: 'Commercial / Vente', permissions: ['tableau_de_bord', 'reservations', 'finances', 'paiements', 'clients', 'partenaires'], isSystem: false },
                 { id: 'pilote', name: 'Pilote / Staff Technique', permissions: ['tableau_de_bord', 'flotte', 'incidents'], isSystem: false },
             ];
             
@@ -41,7 +41,12 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
             
             // Si aucun rôle n'est trouvé, on donne au moins le tableau de bord
             if (role && role.permissions) {
-                setPermissions(role.permissions);
+                // Auto-patch pour le nouveau module paiements (si l'utilisateur est admin ou commercial mais n'a pas encore la permission)
+                let finalPermissions = [...role.permissions];
+                if ((role.id === 'admin' || role.id === 'commercial') && !finalPermissions.includes('paiements')) {
+                    finalPermissions.push('paiements');
+                }
+                setPermissions(finalPermissions);
             } else {
                 // Fallback sécurité si bug de session
                 setPermissions(['tableau_de_bord']);
@@ -62,6 +67,7 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
         { id: 'tableau_de_bord', href: '/', icon: 'fa-chart-pie', label: 'Tableau de bord', group: 'Principal' },
         { id: 'reservations', href: '/reservations', icon: 'fa-calendar-check', label: 'Réservations', group: 'Principal' },
         { id: 'finances', href: '/finances', icon: 'fa-file-invoice-dollar', label: 'Finances & Devis', group: 'Principal' },
+        { id: 'paiements', href: '/paiements', icon: 'fa-wallet', label: 'Paiements', group: 'Principal' },
         { id: 'flotte', href: '/flotte', icon: 'fa-ship', label: 'Flotte & Opérations', group: 'Principal' },
         { id: 'incidents', href: '/incidents', icon: 'fa-triangle-exclamation', label: 'Incidents', group: 'Principal' },
         { id: 'partenaires', href: '/partenaires', icon: 'fa-handshake', label: 'Partenaires', group: 'Principal' },

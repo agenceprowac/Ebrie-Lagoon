@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 import { Sidebar } from '@/components/Sidebar';
+import { NotificationModal } from '@/components/NotificationModal';
 
 export default function ClientsPage() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -203,11 +204,8 @@ export default function ClientsPage() {
             </div>
         </header>
 
-        {notification && (
-            <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg text-white ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
-                {notification.message}
-            </div>
-        )}
+        <NotificationModal notification={notification} onClose={() => setNotification(null)} />
+        
         <div className="p-6 lg:p-8 space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
