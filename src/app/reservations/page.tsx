@@ -36,6 +36,10 @@ export default function ReservationsPage() {
         }
     }, []);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterDate, setFilterDate] = useState('');
+    const [filterStatus, setFilterStatus] = useState('');
+    const [filterBoat, setFilterBoat] = useState('');
+    const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [selectedReservation, setSelectedReservation] = useState<any>(null);
@@ -404,10 +408,57 @@ export default function ReservationsPage() {
         setIsDetailsModalOpen(true);
     };
 
+    const handleSort = (key: string) => {
+        let direction: 'asc' | 'desc' = 'asc';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
     const filteredReservations = reservations.filter(res => {
-        const matchesTab = activeTab === 'all' ? true : res.statut.toLowerCase() === activeTab;
-        const matchesSearch = res.client.toLowerCase().includes(searchTerm.toLowerCase()) || res.id.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesTab && matchesSearch;
+        const matchesTab = activeTab === 'all' ? true : res.statut.toLowerCase() === activeTab.toLowerCase();
+        const matchesSearch = res.client.toLowerCase().includes(searchTerm.toLowerCase()) || res.id.toLowerCase().includes(searchTerm.toLowerCase()) || res.phone.includes(searchTerm) || res.email.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        let matchesDate = true;
+        if (filterDate) {
+            matchesDate = res.raw?.date_prestation === filterDate;
+        }
+
+        let matchesStatus = true;
+        if (filterStatus) {
+            const statusMap: any = {
+                'brouillon': 'Brouillon',
+                'attente': 'En attente',
+                'confirmee': 'Confirmée',
+                'terminee': 'Terminée',
+                'annulee': 'Annulée'
+            };
+            matchesStatus = res.statut === statusMap[filterStatus] || (filterStatus === 'attente' && res.statut === 'En attente d\'acompte');
+        }
+
+        let matchesBoat = true;
+        if (filterBoat) {
+            matchesBoat = res.raw?.navire_id === filterBoat;
+        }
+
+        return matchesTab && matchesSearch && matchesDate && matchesStatus && matchesBoat;
+    }).sort((a, b) => {
+        if (!sortConfig) return 0;
+        let valA: any = '';
+        let valB: any = '';
+        switch(sortConfig.key) {
+            case 'id': valA = a.id; valB = b.id; break;
+            case 'client': valA = a.client; valB = b.client; break;
+            case 'date': valA = a.raw?.date_prestation; valB = b.raw?.date_prestation; break;
+            case 'bateau': valA = a.bateau; valB = b.bateau; break;
+            case 'statut': valA = a.statut; valB = b.statut; break;
+            case 'montant': valA = a.raw?.montant_total || 0; valB = b.raw?.montant_total || 0; break;
+        }
+        
+        if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
     });
 
     const totalItems = filteredReservations.length;
@@ -487,11 +538,11 @@ export default function ReservationsPage() {
                 </div>
                 <div className="flex-1 min-w-[150px]">
                     <label className="block text-xs font-medium text-gray-500 mb-1">Période (Date)</label>
-                    <input type="date" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div className="flex-1 min-w-[150px]">
                     <label className="block text-xs font-medium text-gray-500 mb-1">Statut</label>
-                    <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">Tous les statuts</option>
                         <option value="brouillon">Brouillon</option>
                         <option value="attente">En attente d'acompte</option>
@@ -502,16 +553,16 @@ export default function ReservationsPage() {
                 </div>
                 <div className="flex-1 min-w-[150px]">
                     <label className="block text-xs font-medium text-gray-500 mb-1">Partenaire / Bateau</label>
-                    <select className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select value={filterBoat} onChange={(e) => setFilterBoat(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">Tous les bateaux</option>
-                        <option value="b1">Catamaran "Lagune Express"</option>
-                        <option value="b2">Yacht "VIP Ebrié"</option>
-                        <option value="b3">Speedboat "Rapide"</option>
+                        {flotteList.map(f => (
+                            <option key={f.id} value={f.id}>{f.nom_navire}</option>
+                        ))}
                     </select>
                 </div>
                 <div>
-                    <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center h-10">
-                        <i className="fa-solid fa-filter mr-2"></i> Filtrer
+                    <button onClick={() => { setSearchTerm(''); setFilterDate(''); setFilterStatus(''); setFilterBoat(''); }} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center h-10" title="Réinitialiser">
+                        <i className="fa-solid fa-times mr-2"></i> Effacer
                     </button>
                 </div>
             </div>
@@ -522,13 +573,31 @@ export default function ReservationsPage() {
                     <table className="w-full text-left border-collapse whitespace-nowrap">
                         <thead>
                             <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
-                                <th className="px-6 py-4 font-medium">N° Réservation</th>
-                                <th className="px-6 py-4 font-medium">Client & Contact</th>
-                                <th className="px-6 py-4 font-medium">Prestation (Date & Heure)</th>
-                                <th className="px-6 py-4 font-medium">Partenaire / Bateau</th>
+                                <th onClick={() => handleSort('id')} className="px-6 py-4 font-medium cursor-pointer hover:bg-gray-100 transition group">
+                                    N° Réservation
+                                    <i className={`fa-solid fa-sort${sortConfig?.key === 'id' ? (sortConfig.direction === 'asc' ? '-up' : '-down') : ''} ml-1 text-gray-400 group-hover:text-blue-500`}></i>
+                                </th>
+                                <th onClick={() => handleSort('client')} className="px-6 py-4 font-medium cursor-pointer hover:bg-gray-100 transition group">
+                                    Client & Contact
+                                    <i className={`fa-solid fa-sort${sortConfig?.key === 'client' ? (sortConfig.direction === 'asc' ? '-up' : '-down') : ''} ml-1 text-gray-400 group-hover:text-blue-500`}></i>
+                                </th>
+                                <th onClick={() => handleSort('date')} className="px-6 py-4 font-medium cursor-pointer hover:bg-gray-100 transition group">
+                                    Prestation (Date & Heure)
+                                    <i className={`fa-solid fa-sort${sortConfig?.key === 'date' ? (sortConfig.direction === 'asc' ? '-up' : '-down') : ''} ml-1 text-gray-400 group-hover:text-blue-500`}></i>
+                                </th>
+                                <th onClick={() => handleSort('bateau')} className="px-6 py-4 font-medium cursor-pointer hover:bg-gray-100 transition group">
+                                    Partenaire / Bateau
+                                    <i className={`fa-solid fa-sort${sortConfig?.key === 'bateau' ? (sortConfig.direction === 'asc' ? '-up' : '-down') : ''} ml-1 text-gray-400 group-hover:text-blue-500`}></i>
+                                </th>
                                 <th className="px-6 py-4 font-medium">Créé/Modifié par</th>
-                                <th className="px-6 py-4 font-medium">Statut</th>
-                                <th className="px-6 py-4 font-medium text-right">Montant (FCFA)</th>
+                                <th onClick={() => handleSort('statut')} className="px-6 py-4 font-medium cursor-pointer hover:bg-gray-100 transition group">
+                                    Statut
+                                    <i className={`fa-solid fa-sort${sortConfig?.key === 'statut' ? (sortConfig.direction === 'asc' ? '-up' : '-down') : ''} ml-1 text-gray-400 group-hover:text-blue-500`}></i>
+                                </th>
+                                <th onClick={() => handleSort('montant')} className="px-6 py-4 font-medium text-right cursor-pointer hover:bg-gray-100 transition group">
+                                    Montant (FCFA)
+                                    <i className={`fa-solid fa-sort${sortConfig?.key === 'montant' ? (sortConfig.direction === 'asc' ? '-up' : '-down') : ''} ml-1 text-gray-400 group-hover:text-blue-500`}></i>
+                                </th>
                                 <th className="px-6 py-4 font-medium text-center">Actions</th>
                             </tr>
                         </thead>

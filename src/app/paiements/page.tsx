@@ -137,9 +137,13 @@ export default function PaiementsPage() {
                 
                 await supabase.from('finances').update(updatePayload).eq('id', financeAlert.id);
                 
-                // Si la facture est soldée ou l'acompte payé, on met à jour le statut de la réservation aussi (Optionnel mais recommandé)
-                if (updatePayload.statut === 'Soldée' || updatePayload.statut === 'Acompte payé') {
-                    await supabase.from('reservations').update({ statut: 'Confirmée' }).eq('id', financeAlert.reservation_id);
+                // Mettre à jour la réservation associée (acompte et éventuellement statut)
+                if (financeAlert.reservation_id) {
+                    let resUpdatePayload: any = { acompte: nouvelAcompte };
+                    if (updatePayload.statut === 'Soldée' || updatePayload.statut === 'Acompte payé') {
+                        resUpdatePayload.statut = 'Confirmée';
+                    }
+                    await supabase.from('reservations').update(resUpdatePayload).eq('id', financeAlert.reservation_id);
                 }
 
                 setFinancesAlerts(financesAlerts.map(f => f.id === financeAlert.id ? { ...f, reste_a_payer: nouveauReste, acompte: nouvelAcompte, statut: updatePayload.statut || f.statut } : f).filter(f => f.reste_a_payer > 0));
