@@ -27,6 +27,7 @@ type FinanceAlert = {
     total_ttc: number;
     acompte: number;
     reste_a_payer: number;
+    statut: string;
     reservation_id: string;
     reservations?: { numero_reference: string, clients: { nom: string } };
 };
@@ -60,7 +61,7 @@ export default function PaiementsPage() {
         try {
             const [paieRes, finRes, cliRes, resRes] = await Promise.all([
                 supabase.from('paiements').select('*, clients(nom), reservations(numero_reference)').order('date_paiement', { ascending: false }),
-                supabase.from('finances').select('id, numero_document, total_ttc, acompte, reste_a_payer, reservation_id, reservations(numero_reference, clients(nom))').gt('reste_a_payer', 0).eq('type_document', 'Facture').order('date_creation', { ascending: false }),
+                supabase.from('finances').select('id, numero_document, total_ttc, acompte, reste_a_payer, statut, reservation_id, reservations(numero_reference, clients(nom))').gt('reste_a_payer', 0).eq('type_document', 'Facture').order('date_creation', { ascending: false }),
                 supabase.from('clients').select('id, nom').order('nom', { ascending: true }),
                 supabase.from('reservations').select('id, numero_reference, client_id').order('numero_reference', { ascending: false })
             ]);
@@ -130,10 +131,18 @@ export default function PaiementsPage() {
                 };
                 if (nouveauReste <= 0) {
                     updatePayload.statut = 'Soldée';
+                } else if (nouvelAcompte > 0) {
+                    updatePayload.statut = 'Acompte payé';
                 }
                 
                 await supabase.from('finances').update(updatePayload).eq('id', financeAlert.id);
-                setFinancesAlerts(financesAlerts.map(f => f.id === financeAlert.id ? { ...f, reste_a_payer: nouveauReste, acompte: nouvelAcompte } : f).filter(f => f.reste_a_payer > 0));
+                
+                // Si la facture est soldée ou l'acompte payé, on met à jour le statut de la réservation aussi (Optionnel mais recommandé)
+                if (updatePayload.statut === 'Soldée' || updatePayload.statut === 'Acompte payé') {
+                    await supabase.from('reservations').update({ statut: 'Confirmée' }).eq('id', financeAlert.reservation_id);
+                }
+
+                setFinancesAlerts(financesAlerts.map(f => f.id === financeAlert.id ? { ...f, reste_a_payer: nouveauReste, acompte: nouvelAcompte, statut: updatePayload.statut || f.statut } : f).filter(f => f.reste_a_payer > 0));
             }
 
             setIsNewPaiementModalOpen(false);
